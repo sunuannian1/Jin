@@ -33,21 +33,24 @@ struct HomeView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                header
-                statCards
-                functionGrid
-                dutySection
-                coursesSection
-                todoSection
+        GeometryReader { geo in
+            ScrollView {
+                VStack(spacing: 16) {
+                    header
+                    statCards
+                    functionGrid
+                    dutySection
+                    coursesSection
+                    todoSection
+                }
+                .frame(width: geo.size.width)
+                .padding(.horizontal, 18)
+                .padding(.bottom, 32)
             }
-            .padding(.horizontal, 18)
-            .padding(.bottom, 32)
+            .background(AppTheme.Colors.background)
+            .ignoresSafeArea(edges: .top)
+            .toolbar(.hidden, for: .navigationBar)
         }
-        .background(AppTheme.Colors.background)
-        .ignoresSafeArea(edges: .top)
-        .toolbar(.hidden, for: .navigationBar)
         .alert("添加待办", isPresented: $showingAddTodo) {
             TextField("待办事项", text: $newTodoTitle)
             Button("取消", role: .cancel) {}
@@ -108,7 +111,7 @@ struct HomeView: View {
         HStack(spacing: 10) {
             StatCard(value: "\(viewModel.students.count)", label: "班级学生",
                      systemImage: "person.2.fill", isPrimary: true)
-                .layoutPriority(1)
+                .frame(maxWidth: .infinity)
 
             VStack(spacing: 8) {
                 StatCard(value: "\(viewModel.exams.count)", label: "考试",
