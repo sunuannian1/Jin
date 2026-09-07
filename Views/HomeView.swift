@@ -33,24 +33,22 @@ struct HomeView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            ScrollView {
-                VStack(spacing: 16) {
-                    header
-                    statCards
-                    functionGrid
-                    dutySection
-                    coursesSection
-                    todoSection
-                }
-                .frame(width: geo.size.width)
-                .padding(.horizontal, 18)
-                .padding(.bottom, 32)
+        ScrollView {
+            VStack(spacing: 16) {
+                header
+                statCards
+                functionGrid
+                dutySection
+                coursesSection
+                todoSection
             }
-            .background(AppTheme.Colors.background)
-            .ignoresSafeArea(edges: .top)
-            .toolbar(.hidden, for: .navigationBar)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 32)
         }
+        .background(AppTheme.Colors.background)
+        .ignoresSafeArea(edges: .top)
+        .toolbar(.hidden, for: .navigationBar)
         .alert("添加待办", isPresented: $showingAddTodo) {
             TextField("待办事项", text: $newTodoTitle)
             Button("取消", role: .cancel) {}
