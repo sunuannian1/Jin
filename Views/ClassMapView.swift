@@ -329,7 +329,6 @@ struct ClassMapView: View {
 
         await MainActor.run {
             isGeocoding = false
-            viewModel.save()
             fitRegion()
         }
     }
