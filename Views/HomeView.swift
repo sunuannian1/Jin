@@ -108,18 +108,16 @@ struct HomeView: View {
     private var statCards: some View {
         HStack(spacing: 10) {
             StatCard(value: "\(viewModel.students.count)", label: "班级学生",
-                     systemImage: "person.2.fill", isPrimary: true)
+                     systemImage: "person.2.fill", color: AppTheme.Colors.accent)
                 .frame(maxWidth: .infinity)
-
-            VStack(spacing: 8) {
-                StatCard(value: "\(viewModel.exams.count)", label: "考试",
-                         systemImage: "doc.text.fill", color: .blue)
-                StatCard(value: "\(viewModel.pendingTodos.count)", label: "待办",
-                         systemImage: "checklist", color: .green)
-            }
-            .frame(width: 96)
+            StatCard(value: "\(viewModel.exams.count)", label: "考试",
+                     systemImage: "doc.text.fill", color: .blue)
+                .frame(maxWidth: .infinity)
+            StatCard(value: "\(viewModel.pendingTodos.count)", label: "待办",
+                     systemImage: "checklist", color: .green)
+                .frame(maxWidth: .infinity)
         }
-        .frame(height: 108)
+        .frame(height: 100)
     }
 
     // MARK: - 功能入口（4 列紧凑网格，用户可自定义）
