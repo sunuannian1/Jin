@@ -18,8 +18,8 @@ struct ClassMapView: View {
     @State private var failedAddresses: [String] = []
     @State private var isGeocoding = false
     @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 39.9042, longitude: 116.4074),
-        span: MKCoordinateSpan(latitudeDelta: 10, longitudeDelta: 10)
+        center: CLLocationCoordinate2D(latitude: 33.87, longitude: 113.36),
+        span: MKCoordinateSpan(latitudeDelta: 0.3, longitudeDelta: 0.3)
     )
 
     private var studentsWithAddress: [Student] {
@@ -123,7 +123,20 @@ struct ClassMapView: View {
         .listStyle(.insetGrouped)
     }
 
-    // CLGeocoder 需逐个串行请求
+    // 叶县默认坐标（解析失败时兜底）
+    private let yexianCoordinate = CLLocationCoordinate2D(latitude: 33.87, longitude: 113.36)
+
+    // 地址预处理：去掉横杠，加上中国前缀，提高中文地址解析率
+    private func normalizedAddress(_ raw: String) -> String {
+        var addr = raw.replacingOccurrences(of: "-", with: "")
+        addr = addr.replacingOccurrences(of: "  ", with: " ")
+        if !addr.hasPrefix("中国") {
+            addr = "中国" + addr
+        }
+        return addr
+    }
+
+    // CLGeocoder 需逐个串行请求，加间隔防限流，失败用叶县坐标兜底
     private func geocodeAll() async {
         guard pins.isEmpty, !isGeocoding, !studentsWithAddress.isEmpty else { return }
         await MainActor.run { isGeocoding = true }
@@ -131,17 +144,25 @@ struct ClassMapView: View {
         var resolved: [AddressPin] = []
         var failures: [String] = []
 
-        for student in studentsWithAddress {
+        for (index, student) in studentsWithAddress.enumerated() {
             let address = student.address
+            let normalized = normalizedAddress(address)
             do {
-                let placemarks = try await geocoder.geocodeAddressString(address)
+                let placemarks = try await geocoder.geocodeAddressString(normalized)
                 if let location = placemarks.first?.location {
                     resolved.append(AddressPin(name: student.name, address: address, coordinate: location.coordinate))
                 } else {
+                    // 解析不到精确地址，用叶县坐标兜底，仍标注学生
+                    resolved.append(AddressPin(name: student.name, address: address, coordinate: yexianCoordinate))
                     failures.append(address)
                 }
             } catch {
+                resolved.append(AddressPin(name: student.name, address: address, coordinate: yexianCoordinate))
                 failures.append(address)
+            }
+            // 每 5 个请求后暂停 1 秒，防 CLGeocoder 限流
+            if (index + 1) % 5 == 0 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
             }
         }
 

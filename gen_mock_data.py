@@ -1,4 +1,4 @@
-import openpyxl, random, json, uuid
+﻿import openpyxl, random, json, uuid
 from datetime import date, timedelta
 
 random.seed(42)
@@ -115,8 +115,8 @@ backup = {
             'id': semester_id,
             'name': '2025-2026学年第一学期',
             'shortName': '第1学期',
-            'startDate': '2025-09-01T00:00:00Z',
-            'endDate': '2026-01-31T00:00:00Z',
+            'startDate': 778377600.0,
+            'endDate': 791510400.0,
             'isCurrent': True
         }
     ],
