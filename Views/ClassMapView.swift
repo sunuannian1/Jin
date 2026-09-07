@@ -124,7 +124,7 @@ struct ClassMapView: View {
     }
 
     // 高德地图 Web 服务 API Key（在 https://lbs.amap.com 申请，选"Web服务"类型）
-    private let amapApiKey = "61d28572bacc10c7aa713f82c1279bcf"
+    private let amapApiKey = "e0177c72e585f5718b4cdbc052918ecf"
     // 叶县默认坐标（解析失败时兜底）
     private let yexianCoordinate = CLLocationCoordinate2D(latitude: 33.87, longitude: 113.36)
 
@@ -137,7 +137,7 @@ struct ClassMapView: View {
 
     // 调用高德地图地理编码 API，精准定位中国大陆地址
     private func geocodeWithAMap(_ address: String) async -> CLLocationCoordinate2D? {
-        guard !amapApiKey.isEmpty, amapApiKey != "61d28572bacc10c7aa713f82c1279bcf" else { return nil }
+        guard !amapApiKey.isEmpty, amapApiKey != "e0177c72e585f5718b4cdbc052918ecf" else { return nil }
         let encoded = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? address
         let urlStr = "https://restapi.amap.com/v3/geocode/geo?key=\(amapApiKey)&address=\(encoded)&city=平顶山"
         guard let url = URL(string: urlStr) else { return nil }
