@@ -123,46 +123,63 @@ struct ClassMapView: View {
         .listStyle(.insetGrouped)
     }
 
+    // 高德地图 Web 服务 API Key（在 https://lbs.amap.com 申请，选"Web服务"类型）
+    private let amapApiKey = "61d28572bacc10c7aa713f82c1279bcf"
     // 叶县默认坐标（解析失败时兜底）
     private let yexianCoordinate = CLLocationCoordinate2D(latitude: 33.87, longitude: 113.36)
 
-    // 地址预处理：去掉横杠，加上中国前缀，提高中文地址解析率
+    // 地址预处理：去掉横杠，整理为标准地址格式
     private func normalizedAddress(_ raw: String) -> String {
         var addr = raw.replacingOccurrences(of: "-", with: "")
         addr = addr.replacingOccurrences(of: "  ", with: " ")
-        if !addr.hasPrefix("中国") {
-            addr = "中国" + addr
-        }
-        return addr
+        return addr.trimmingCharacters(in: .whitespaces)
     }
 
-    // CLGeocoder 需逐个串行请求，加间隔防限流，失败用叶县坐标兜底
+    // 调用高德地图地理编码 API，精准定位中国大陆地址
+    private func geocodeWithAMap(_ address: String) async -> CLLocationCoordinate2D? {
+        guard !amapApiKey.isEmpty, amapApiKey != "61d28572bacc10c7aa713f82c1279bcf" else { return nil }
+        let encoded = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? address
+        let urlStr = "https://restapi.amap.com/v3/geocode/geo?key=\(amapApiKey)&address=\(encoded)&city=平顶山"
+        guard let url = URL(string: urlStr) else { return nil }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let geocodes = json["geocodes"] as? [[String: Any]],
+               let first = geocodes.first,
+               let location = first["location"] as? String {
+                let parts = location.split(separator: ",")
+                if parts.count == 2,
+                   let lon = Double(parts[0]),
+                   let lat = Double(parts[1]) {
+                    return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                }
+            }
+        } catch {
+            return nil
+        }
+        return nil
+    }
+
+    // 逐个调用高德 API 解析地址，失败用叶县坐标兜底
     private func geocodeAll() async {
         guard pins.isEmpty, !isGeocoding, !studentsWithAddress.isEmpty else { return }
         await MainActor.run { isGeocoding = true }
-        let geocoder = CLGeocoder()
         var resolved: [AddressPin] = []
         var failures: [String] = []
 
         for (index, student) in studentsWithAddress.enumerated() {
             let address = student.address
             let normalized = normalizedAddress(address)
-            do {
-                let placemarks = try await geocoder.geocodeAddressString(normalized)
-                if let location = placemarks.first?.location {
-                    resolved.append(AddressPin(name: student.name, address: address, coordinate: location.coordinate))
-                } else {
-                    // 解析不到精确地址，用叶县坐标兜底，仍标注学生
-                    resolved.append(AddressPin(name: student.name, address: address, coordinate: yexianCoordinate))
-                    failures.append(address)
-                }
-            } catch {
+            if let coord = await geocodeWithAMap(normalized) {
+                resolved.append(AddressPin(name: student.name, address: address, coordinate: coord))
+            } else {
+                // 高德解析失败，用叶县坐标兜底
                 resolved.append(AddressPin(name: student.name, address: address, coordinate: yexianCoordinate))
                 failures.append(address)
             }
-            // 每 5 个请求后暂停 1 秒，防 CLGeocoder 限流
+            // 高德 QPS 限制，每 5 个请求暂停 0.5 秒
             if (index + 1) % 5 == 0 {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                try? await Task.sleep(nanoseconds: 500_000_000)
             }
         }
 
