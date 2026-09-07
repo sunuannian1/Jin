@@ -336,6 +336,13 @@ class AppViewModel: ObservableObject {
     func deleteTodo(_ todo: TodoItem) { todos.removeAll { $0.id == todo.id } }
     var pendingTodos: [TodoItem] { todos.filter { !$0.isCompleted } }
 
+    // 待录成绩数 = 考试数 * 学生数 - 已录入成绩数
+    var pendingScoreCount: Int {
+        let totalExpected = exams.count * students.count
+        let recorded = scoreRecords.count
+        return max(0, totalExpected - recorded)
+    }
+
     // MARK: - 通知
     func addNotification(title: String, content: String, audience: String) {
         notifications.insert(NotificationItem(title: title, content: content, audience: audience), at: 0)

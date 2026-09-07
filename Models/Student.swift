@@ -133,6 +133,21 @@ struct Course: Identifiable, Codable {
         self.classroom = classroom
         self.teacher = teacher
     }
+
+    // 根据节次返回时间字符串
+    var timeString: String {
+        let times = [
+            1: "08:00-08:45",
+            2: "08:55-09:40",
+            3: "10:00-10:45",
+            4: "10:55-11:40",
+            5: "14:00-14:45",
+            6: "14:55-15:40",
+            7: "16:00-16:45",
+            8: "16:55-17:40"
+        ]
+        return times[period] ?? "第\(period)节"
+    }
 }
 
 // MARK: - 值日组

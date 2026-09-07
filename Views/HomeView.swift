@@ -24,11 +24,13 @@ struct HomeView: View {
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
+        let teacherName = viewModel.classInfo.headTeacher
+        let surname = teacherName.isEmpty ? "老师" : "\(teacherName.prefix(1))老师"
         switch hour {
-        case 5..<12: return "上午好"
-        case 12..<14: return "中午好"
-        case 14..<18: return "下午好"
-        default: return "晚上好"
+        case 5..<12: return "早上好，\(surname)"
+        case 12..<14: return "中午好，\(surname)"
+        case 14..<18: return "下午好，\(surname)"
+        default: return "夜深了，\(surname)"
         }
     }
 
@@ -70,10 +72,9 @@ struct HomeView: View {
     // MARK: - 顶部大标题头部
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(greeting.uppercased())
-                .font(AppTheme.Fonts.caption.weight(.semibold))
+            Text(greeting)
+                .font(AppTheme.Fonts.footnote.weight(.medium))
                 .foregroundColor(AppTheme.Colors.tertiaryText)
-                .tracking(1.2)
 
             HStack(alignment: .firstTextBaseline) {
                 Text(viewModel.classInfo.className.isEmpty ? "我的班级" : viewModel.classInfo.className)
@@ -110,11 +111,11 @@ struct HomeView: View {
             StatCard(value: "\(viewModel.students.count)", label: "班级学生",
                      systemImage: "person.2.fill", color: AppTheme.Colors.accent)
                 .frame(maxWidth: .infinity)
-            StatCard(value: "\(viewModel.exams.count)", label: "考试",
-                     systemImage: "doc.text.fill", color: .blue)
+            StatCard(value: "\(viewModel.pendingScoreCount)", label: "待录成绩",
+                     systemImage: "pencil.line", color: .orange)
                 .frame(maxWidth: .infinity)
-            StatCard(value: "\(viewModel.pendingTodos.count)", label: "待办",
-                     systemImage: "checklist", color: .green)
+            StatCard(value: "\(viewModel.classInfo.subjects.count)", label: "开设科目",
+                     systemImage: "book.fill", color: .blue)
                 .frame(maxWidth: .infinity)
         }
         .frame(height: 100)
@@ -263,24 +264,16 @@ struct HomeView: View {
                         .buttonStyle(.plain)
                     }
 
-                    HStack(spacing: 14) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(AppTheme.Colors.accentGradient)
-                                .frame(width: 52, height: 52)
-                            Text("\(duty.groupNumber)")
-                                .font(.system(size: 22, weight: .heavy))
-                                .foregroundColor(.white)
-                        }
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("第\(duty.groupNumber)值日组")
-                                .font(AppTheme.Fonts.headline)
-                                .foregroundColor(AppTheme.Colors.primaryText)
-                            Text(viewModel.dutyStudentNames(of: duty).isEmpty ? "未安排成员" : viewModel.dutyStudentNames(of: duty))
-                                .font(AppTheme.Fonts.footnote)
-                                .foregroundColor(AppTheme.Colors.secondaryText)
-                                .lineLimit(2)
-                        }
+                    HStack(spacing: 8) {
+                        Text("第\(duty.groupNumber)组")
+                            .font(AppTheme.Fonts.headline.weight(.semibold))
+                            .foregroundColor(.green)
+                        Text("·")
+                            .foregroundColor(AppTheme.Colors.tertiaryText)
+                        Text(viewModel.dutyStudentNames(of: duty).isEmpty ? "未安排成员" : viewModel.dutyStudentNames(of: duty))
+                            .font(AppTheme.Fonts.body)
+                            .foregroundColor(AppTheme.Colors.primaryText)
+                            .lineLimit(2)
                         Spacer()
                     }
                 }
@@ -329,25 +322,18 @@ struct HomeView: View {
                 } else {
                     VStack(spacing: 0) {
                         ForEach(Array(todayCourses.enumerated()), id: \.element.id) { index, course in
-                            HStack(spacing: 12) {
-                                Text("第\(course.period)节")
+                            HStack(spacing: 10) {
+                                Text(course.timeString)
                                     .font(AppTheme.Fonts.caption.weight(.semibold))
                                     .foregroundColor(AppTheme.Colors.accent)
-                                    .frame(width: 52, alignment: .leading)
+                                    .frame(width: 72, alignment: .leading)
                                 Text(course.subject)
                                     .font(AppTheme.Fonts.body.weight(.medium))
                                     .foregroundColor(AppTheme.Colors.primaryText)
-                                if !course.teacher.isEmpty {
-                                    Text(course.teacher)
-                                        .font(AppTheme.Fonts.caption2)
-                                        .foregroundColor(AppTheme.Colors.tertiaryText)
-                                }
                                 Spacer()
-                                if !course.classroom.isEmpty {
-                                    Text(course.classroom)
-                                        .font(AppTheme.Fonts.caption2)
-                                        .foregroundColor(AppTheme.Colors.tertiaryText)
-                                }
+                                Text("第\(course.period)节")
+                                    .font(AppTheme.Fonts.caption2)
+                                    .foregroundColor(AppTheme.Colors.tertiaryText)
                             }
                             .padding(.vertical, 10)
                             if index < todayCourses.count - 1 {
