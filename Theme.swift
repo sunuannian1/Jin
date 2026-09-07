@@ -433,11 +433,11 @@ struct StudentAvatar: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
-                .fill(avatarColor.opacity(0.15))
+            Circle()
+                .fill(AppTheme.Colors.accent.opacity(0.15))
             Text(String(name.prefix(1)))
                 .font(.system(size: size * 0.42, weight: .bold))
-                .foregroundColor(avatarColor)
+                .foregroundColor(AppTheme.Colors.accent)
         }
         .frame(width: size, height: size)
     }
