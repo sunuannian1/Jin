@@ -485,7 +485,7 @@ class AppViewModel: ObservableObject {
                 studentNumber: String(format: "%02d", index + 1),
                 gender: gender,
                 phone: String(format: "1380000%04d", index + 1),
-                parentPhone: String(format: "1390000%04d", index + 1),
+                fatherPhone: String(format: "1390000%04d", index + 1),
                 address: ["北京市海淀区中关村大街1号", "北京市朝阳区建国路88号", "北京市西城区西长安街2号", "北京市东城区东直门大街5号"][index % 4],
                 groupNumber: index % 4 + 1,
                 dormitory: index < 6 ? "男生楼2-0\(index % 3 + 1)" : "女生楼3-0\(index % 3 + 1)",

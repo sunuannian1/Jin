@@ -1,4 +1,4 @@
-import Foundation
+﻿import Foundation
 
 // MARK: - 班级信息
 struct ClassInfo: Codable {
@@ -22,7 +22,13 @@ struct Student: Identifiable, Codable {
     var studentNumber: String      // 学号
     var gender: Gender
     var phone: String              // 学生电话
-    var parentPhone: String        // 家长电话
+    var fatherName: String         // 父亲姓名
+    var fatherPhone: String        // 父亲电话
+    var motherName: String         // 母亲姓名
+    var motherPhone: String        // 母亲电话
+    var ethnicity: String          // 民族
+    var birthDate: String          // 出生年月
+    var idCardNumber: String       // 身份证号
     var address: String            // 家庭住址
     var groupNumber: Int           // 小组编号（1-4）
     var seatRow: Int               // 座位行（0=未分配）
@@ -36,15 +42,23 @@ struct Student: Identifiable, Codable {
     }
 
     init(id: UUID = UUID(), name: String, studentNumber: String = "", gender: Gender = .male,
-         phone: String = "", parentPhone: String = "", address: String = "",
-         groupNumber: Int = 1, seatRow: Int = 0, seatCol: Int = 0,
+         phone: String = "", fatherName: String = "", fatherPhone: String = "",
+         motherName: String = "", motherPhone: String = "",
+         ethnicity: String = "汉", birthDate: String = "", idCardNumber: String = "",
+         address: String = "", groupNumber: Int = 1, seatRow: Int = 0, seatCol: Int = 0,
          dormitory: String = "", notes: String = "") {
         self.id = id
         self.name = name
         self.studentNumber = studentNumber
         self.gender = gender
         self.phone = phone
-        self.parentPhone = parentPhone
+        self.fatherName = fatherName
+        self.fatherPhone = fatherPhone
+        self.motherName = motherName
+        self.motherPhone = motherPhone
+        self.ethnicity = ethnicity
+        self.birthDate = birthDate
+        self.idCardNumber = idCardNumber
         self.address = address
         self.groupNumber = groupNumber
         self.seatRow = seatRow

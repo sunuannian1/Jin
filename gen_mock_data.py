@@ -1,4 +1,4 @@
-﻿import openpyxl, random, json, uuid
+import openpyxl, random, json, uuid
 from datetime import date, timedelta
 
 random.seed(42)
@@ -20,6 +20,7 @@ female_names = ['芳','娜','敏','静','丽','艳','娟','霞','秀英','慧','
 towns = ['叶邑镇','保安镇','辛店镇','龙泉乡','常村镇','夏李乡','田庄乡','龚店乡','邓李乡','水寨乡','廉村镇','洪庄杨乡','仙台镇','任店镇','马庄回族乡']
 villages = ['小张庄','孟庄村','盆杨村','梅湾村','双庄村','老鸦张村','水郭村','菜庄村','蔡庄村','凤岭新村','杨岭庄村','思城村','段庄村','李庄村','王庄村','赵庄村','刘庄村','陈庄村','孙庄村','周庄村']
 ethnicities = ['汉'] * 55 + ['满族', '回族', '蒙古族']
+dorms = ['101','102','103','104','201','202','203','204','301','302']
 
 def random_phone():
     prefixes = ['135','136','137','138','139','150','151','152','158','159','182','183','186','187','188','176','177','199']
@@ -42,13 +43,19 @@ def random_id_card(birth_date):
     check = random.choice(['0','1','2','3','4','5','6','7','8','9','X'])
     return area + birth + seq + check
 
+# 动态座位排布：每行8列
+COLS_PER_ROW = 8
+total = len(students)
+total_rows = (total + COLS_PER_ROW - 1) // COLS_PER_ROW
+
 # 生成数据
 app_students = []
 for i, s in enumerate(students):
+    # 出生年月：2012年9月-2013年8月
     start = date(2012, 9, 1)
     end = date(2013, 8, 31)
     birth = start + timedelta(days=random.randint(0, (end - start).days))
-    age = date(2025, 9, 1).year - birth.year
+    birth_str = birth.strftime('%Y年%m月')
 
     ethnicity = random.choice(ethnicities)
     father_name = random_name('男')
@@ -57,10 +64,12 @@ for i, s in enumerate(students):
     mother_phone = random_phone()
     address = '河南省-平顶山市-叶县-' + random.choice(towns) + random.choice(villages) + str(random.randint(1, 999)) + '号'
     id_card = random_id_card(birth)
-    birth_str = birth.strftime('%Y年%m月')
+    student_phone = '' if random.random() < 0.7 else random_phone()
+    dormitory = random.choice(dorms) if random.random() < 0.5 else ''
 
-    seat_row = i // 8 + 1
-    seat_col = i % 8 + 1
+    # 动态座位：按顺序排列，每行8列
+    seat_row = i // COLS_PER_ROW + 1
+    seat_col = i % COLS_PER_ROW + 1
     group_number = (i % 4) + 1
 
     # 写入 Excel
@@ -71,28 +80,33 @@ for i, s in enumerate(students):
     ws_src.cell(row, 4, ethnicity)
     ws_src.cell(row, 5, birth_str)
     ws_src.cell(row, 6, id_card)
-    ws_src.cell(row, 7, age)
+    ws_src.cell(row, 7, date(2025, 9, 1).year - birth.year)
     ws_src.cell(row, 8, father_name)
     ws_src.cell(row, 9, father_phone)
     ws_src.cell(row, 10, mother_name)
     ws_src.cell(row, 11, mother_phone)
     ws_src.cell(row, 12, address)
 
-    # App 学生数据（严格按照 Student 模型字段）
-    notes = '父亲：' + father_name + ' ' + father_phone + '；母亲：' + mother_name + ' ' + mother_phone + '；民族：' + ethnicity + '；出生：' + birth_str + '；身份证：' + id_card
+    # App 学生数据（所有独立字段，备注留空）
     app_students.append({
         'id': str(uuid.uuid4()),
         'name': s['name'],
         'studentNumber': '2025' + str(i + 1).zfill(3),
         'gender': s['gender'],
-        'phone': '',
-        'parentPhone': father_phone,
+        'phone': student_phone,
+        'fatherName': father_name,
+        'fatherPhone': father_phone,
+        'motherName': mother_name,
+        'motherPhone': mother_phone,
+        'ethnicity': ethnicity,
+        'birthDate': birth_str,
+        'idCardNumber': id_card,
         'address': address,
         'groupNumber': group_number,
         'seatRow': seat_row,
         'seatCol': seat_col,
-        'dormitory': '',
-        'notes': notes
+        'dormitory': dormitory,
+        'notes': ''
     })
 
 # 保存 Excel
@@ -100,8 +114,7 @@ excel_path = r'D:\文件归档\桌面归档\02_我的项目\ClassTeacherApp\七�
 wb_src.save(excel_path)
 print('Excel 已保存:', excel_path)
 
-# 按照 AllDataBackup 真实结构生成 JSON
-semester_id = str(uuid.uuid4())
+# 保存 App JSON 备份（Date 用 Swift 时间戳）
 backup = {
     'classInfo': {
         'className': '七（4）班',
@@ -112,7 +125,7 @@ backup = {
     'students': app_students,
     'semesters': [
         {
-            'id': semester_id,
+            'id': str(uuid.uuid4()),
             'name': '2025-2026学年第一学期',
             'shortName': '第1学期',
             'startDate': 778377600.0,
@@ -133,7 +146,9 @@ backup = {
 json_path = r'D:\文件归档\桌面归档\02_我的项目\ClassTeacherApp\七4班_模拟数据_备份.json'
 with open(json_path, 'w', encoding='utf-8') as f:
     json.dump(backup, f, ensure_ascii=False, indent=2)
+
 print('JSON 备份已保存:', json_path)
 print('学生数:', len(app_students))
-print('示例:', app_students[0]['name'], '-', app_students[0]['gender'], '-', app_students[0]['parentPhone'])
-print('备注:', app_students[0]['notes'][:60])
+print('座位排布:', total_rows, '行 x', COLS_PER_ROW, '列')
+print('示例:', app_students[0]['name'], app_students[0]['fatherName'], app_students[0]['fatherPhone'])
+print('字段:', list(app_students[0].keys()))

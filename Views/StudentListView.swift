@@ -33,7 +33,7 @@ struct StudentListView: View {
             $0.name.localizedCaseInsensitiveContains(searchText)
                 || $0.studentNumber.localizedCaseInsensitiveContains(searchText)
                 || $0.phone.contains(searchText)
-                || $0.parentPhone.contains(searchText)
+                || $0.fatherPhone.contains(searchText)
         }
     }
 
@@ -74,11 +74,11 @@ struct StudentListView: View {
                                         Label("拨打学生电话 \(student.phone)", systemImage: "phone.fill")
                                     }
                                 }
-                                if !student.parentPhone.isEmpty, let url = telURL(student.parentPhone) {
+                                if !student.fatherPhone.isEmpty, let url = telURL(student.fatherPhone) {
                                     Button {
                                         openURL(url)
                                     } label: {
-                                        Label("拨打家长电话 \(student.parentPhone)", systemImage: "phone.arrow.right.left")
+                                        Label("拨打家长电话 \(student.fatherPhone)", systemImage: "phone.arrow.right.left")
                                     }
                                 }
                                 Button(role: .destructive) {
@@ -181,7 +181,7 @@ struct StudentListView: View {
         for student in filteredStudents {
             let seat = student.seatRow > 0 ? "第\(student.seatRow)排第\(student.seatCol)座" : "未分配"
             let phone = student.phone.isEmpty ? "—" : student.phone
-            let parent = student.parentPhone.isEmpty ? "—" : student.parentPhone
+            let parent = student.fatherPhone.isEmpty ? "—" : student.fatherPhone
             rows += "<tr><td>\(student.studentNumber)</td><td>\(student.name)</td><td>\(student.gender.rawValue)</td>"
             rows += "<td>\(phone)</td><td>\(parent)</td><td>第\(student.groupNumber)组</td><td>\(seat)</td></tr>"
         }
@@ -248,7 +248,7 @@ struct StudentCard: View {
                     }
 
                     // 电话图标
-                    if !student.phone.isEmpty || !student.parentPhone.isEmpty {
+                    if !student.phone.isEmpty || !student.fatherPhone.isEmpty {
                         Image(systemName: "phone.fill")
                             .font(.system(size: 9))
                             .foregroundColor(.green)
@@ -329,22 +329,44 @@ struct StudentDetailView: View {
                 .padding(.horizontal, 18)
                 .padding(.top, 16)
 
+                // 基本信息
+                detailSection(title: "基本信息", systemImage: "person.text.rectangle") {
+                    infoRow(icon: "person.2", label: "民族", value: student.ethnicity.isEmpty ? "—" : student.ethnicity)
+                    infoRow(icon: "birthday.cake", label: "出生年月", value: student.birthDate.isEmpty ? "—" : student.birthDate)
+                    infoRow(icon: "number", label: "身份证号", value: student.idCardNumber.isEmpty ? "—" : student.idCardNumber)
+                }
+
+                // 家长信息
+                detailSection(title: "家长信息", systemImage: "person.2.fill") {
+                    if !student.fatherName.isEmpty {
+                        infoRow(icon: "person.fill", label: "父亲", value: student.fatherName)
+                    }
+                    if !student.fatherPhone.isEmpty {
+                        contactRow(icon: "phone.fill", label: "父亲电话", value: student.fatherPhone, color: .blue) {
+                            if let url = telURL(student.fatherPhone) { openURL(url) }
+                        }
+                    }
+                    if !student.motherName.isEmpty {
+                        infoRow(icon: "person.fill", label: "母亲", value: student.motherName)
+                    }
+                    if !student.motherPhone.isEmpty {
+                        contactRow(icon: "phone.fill", label: "母亲电话", value: student.motherPhone, color: .pink) {
+                            if let url = telURL(student.motherPhone) { openURL(url) }
+                        }
+                    }
+                }
+
                 // 联系方式
                 detailSection(title: "联系方式", systemImage: "phone.fill") {
                     if !student.phone.isEmpty {
-                        contactRow(icon: "phone.fill", label: "学生电话", value: student.phone, color: .blue) {
+                        contactRow(icon: "phone.fill", label: "学生电话", value: student.phone, color: .green) {
                             if let url = telURL(student.phone) { openURL(url) }
-                        }
-                    }
-                    if !student.parentPhone.isEmpty {
-                        contactRow(icon: "phone.arrow.right.left", label: "家长电话", value: student.parentPhone, color: .green) {
-                            if let url = telURL(student.parentPhone) { openURL(url) }
                         }
                     }
                     if !student.address.isEmpty {
                         infoRow(icon: "location.fill", label: "家庭住址", value: student.address)
                     }
-                    if student.phone.isEmpty && student.parentPhone.isEmpty && student.address.isEmpty {
+                    if student.phone.isEmpty && student.address.isEmpty {
                         Text("暂无联系方式")
                             .font(AppTheme.Fonts.footnote)
                             .foregroundColor(AppTheme.Colors.tertiaryText)
@@ -493,7 +515,13 @@ struct StudentFormView: View {
     @State private var studentNumber = ""
     @State private var gender: Student.Gender = .male
     @State private var phone = ""
-    @State private var parentPhone = ""
+    @State private var fatherName = ""
+    @State private var fatherPhone = ""
+    @State private var motherName = ""
+    @State private var motherPhone = ""
+    @State private var ethnicity = "汉"
+    @State private var birthDate = ""
+    @State private var idCardNumber = ""
     @State private var address = ""
     @State private var groupNumber = 1
     @State private var dormitory = ""
@@ -516,27 +544,36 @@ struct StudentFormView: View {
                         Text(g.rawValue).tag(g)
                     }
                 }
+                TextField("民族", text: $ethnicity)
+                TextField("出生年月", text: $birthDate)
+                TextField("身份证号", text: $idCardNumber)
                 Picker("小组", selection: $groupNumber) {
                     ForEach(1...6, id: \.self) { n in
                         Text("第\(n)组").tag(n)
                     }
                 }
             }
+            Section("家长信息") {
+                TextField("父亲姓名", text: $fatherName)
+                TextField("父亲电话", text: $fatherPhone)
+                    .keyboardType(.phonePad)
+                TextField("母亲姓名", text: $motherName)
+                TextField("母亲电话", text: $motherPhone)
+                    .keyboardType(.phonePad)
+            }
             Section("联系方式") {
                 TextField("学生电话", text: $phone)
-                    .keyboardType(.phonePad)
-                TextField("家长电话", text: $parentPhone)
                     .keyboardType(.phonePad)
                 TextField("家庭住址", text: $address)
             }
             Section("座位") {
                 Picker("排", selection: $seatRow) {
                     Text("未排座").tag(0)
-                    ForEach(1...7, id: \.self) { Text("第\($0)排").tag($0) }
+                    ForEach(1...10, id: \.self) { Text("第\($0)排").tag($0) }
                 }
                 if seatRow > 0 {
                     Picker("列", selection: $seatCol) {
-                        ForEach(1...5, id: \.self) { Text("第\($0)列").tag($0) }
+                        ForEach(1...8, id: \.self) { Text("第\($0)列").tag($0) }
                     }
                 }
             }
@@ -564,7 +601,13 @@ struct StudentFormView: View {
                 studentNumber = student.studentNumber
                 gender = student.gender
                 phone = student.phone
-                parentPhone = student.parentPhone
+                fatherName = student.fatherName
+                fatherPhone = student.fatherPhone
+                motherName = student.motherName
+                motherPhone = student.motherPhone
+                ethnicity = student.ethnicity
+                birthDate = student.birthDate
+                idCardNumber = student.idCardNumber
                 address = student.address
                 groupNumber = student.groupNumber
                 dormitory = student.dormitory
@@ -582,8 +625,11 @@ struct StudentFormView: View {
         case .add:
             viewModel.addStudent(Student(
                 name: trimmed, studentNumber: studentNumber, gender: gender,
-                phone: phone, parentPhone: parentPhone, address: address,
-                groupNumber: groupNumber, seatRow: seatRow, seatCol: seatCol, dormitory: dormitory, notes: notes
+                phone: phone, fatherName: fatherName, fatherPhone: fatherPhone,
+                motherName: motherName, motherPhone: motherPhone,
+                ethnicity: ethnicity, birthDate: birthDate, idCardNumber: idCardNumber,
+                address: address, groupNumber: groupNumber,
+                seatRow: seatRow, seatCol: seatCol, dormitory: dormitory, notes: notes
             ))
         case .edit(let student):
             var updated = student
@@ -591,7 +637,13 @@ struct StudentFormView: View {
             updated.studentNumber = studentNumber
             updated.gender = gender
             updated.phone = phone
-            updated.parentPhone = parentPhone
+            updated.fatherName = fatherName
+            updated.fatherPhone = fatherPhone
+            updated.motherName = motherName
+            updated.motherPhone = motherPhone
+            updated.ethnicity = ethnicity
+            updated.birthDate = birthDate
+            updated.idCardNumber = idCardNumber
             updated.address = address
             updated.groupNumber = groupNumber
             updated.dormitory = dormitory
