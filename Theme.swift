@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import UIKit
 
 // MARK: - 高级设计系统
@@ -381,26 +381,34 @@ struct FeatureButton: View {
     var onClick: (() -> Void)? = nil
 
     var body: some View {
-        Button(action: { onClick?() }) {
-            VStack(spacing: AppTheme.Spacing.small) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(color)
-                    .frame(width: 44, height: 44)
-                    .background(color.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.element, style: .continuous))
-                Text(title)
-                    .font(AppTheme.Fonts.caption.weight(.medium))
-                    .foregroundColor(AppTheme.Colors.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+        Group {
+            if let onClick = onClick {
+                Button(action: onClick) { content }
+                    .buttonStyle(.plain)
+            } else {
+                content
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, AppTheme.Spacing.small)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+    }
+
+    private var content: some View {
+        VStack(spacing: AppTheme.Spacing.small) {
+            Image(systemName: systemImage)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(color)
+                .frame(width: 44, height: 44)
+                .background(color.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.element, style: .continuous))
+            Text(title)
+                .font(AppTheme.Fonts.caption.weight(.medium))
+                .foregroundColor(AppTheme.Colors.secondaryText)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppTheme.Spacing.small)
+        .contentShape(Rectangle())
     }
 }
 

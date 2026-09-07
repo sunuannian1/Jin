@@ -95,7 +95,7 @@ struct HomeView: View {
                         .font(AppTheme.Fonts.caption2)
                         .foregroundColor(AppTheme.Colors.tertiaryText)
                 }
-                .frame(minWidth: 70, alignment: .trailing)
+                .frame(minWidth: 82, alignment: .trailing)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -108,17 +108,17 @@ struct HomeView: View {
         HStack(spacing: 10) {
             StatCard(value: "\(viewModel.students.count)", label: "班级学生",
                      systemImage: "person.2.fill", isPrimary: true)
-                .frame(maxWidth: .infinity)
+                .layoutPriority(1)
 
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 StatCard(value: "\(viewModel.exams.count)", label: "考试",
                          systemImage: "doc.text.fill", color: .blue)
                 StatCard(value: "\(viewModel.pendingTodos.count)", label: "待办",
                          systemImage: "checklist", color: .green)
             }
-            .frame(width: 100)
+            .frame(width: 96)
         }
-        .frame(height: 112)
+        .frame(height: 108)
     }
 
     // MARK: - 功能入口（4 列紧凑网格，用户可自定义）
