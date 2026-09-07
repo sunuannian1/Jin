@@ -1,149 +1,287 @@
-﻿import SwiftUI
+import SwiftUI
 import MapKit
 import CoreLocation
 
 // 地图标注
-struct AddressPin: Identifiable {
-    let id = UUID()
+struct StudentPin: Identifiable {
+    let id: UUID
     let name: String
     let address: String
     let coordinate: CLLocationCoordinate2D
 }
 
-// 学生住址分布地图：打开时逐个解析地址并落标记
+// 学生住址分布地图：优先用学生已保存的坐标，未解析的可批量解析
 struct ClassMapView: View {
     @EnvironmentObject var viewModel: AppViewModel
 
-    @State private var pins: [AddressPin] = []
-    @State private var failedAddresses: [String] = []
-    @State private var isGeocoding = false
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 33.87, longitude: 113.36),
         span: MKCoordinateSpan(latitudeDelta: 0.3, longitudeDelta: 0.3)
     )
+    @State private var isGeocoding = false
+    @State private var selectedStudent: Student?
+    @State private var showBottomPanel = false
 
-    private var studentsWithAddress: [Student] {
-        viewModel.students.filter { !$0.address.trimmingCharacters(in: .whitespaces).isEmpty }
+    // 有坐标的学生
+    private var studentsWithCoord: [Student] {
+        viewModel.students.filter { $0.latitude != nil && $0.longitude != nil }
+    }
+
+    // 有地址但没坐标的学生（需要解析）
+    private var studentsNeedGeocode: [Student] {
+        viewModel.students.filter {
+            !$0.address.trimmingCharacters(in: .whitespaces).isEmpty
+            && ($0.latitude == nil || $0.longitude == nil)
+        }
+    }
+
+    // 地图标注
+    private var pins: [StudentPin] {
+        studentsWithCoord.map { stu in
+            StudentPin(
+                id: stu.id,
+                name: stu.name,
+                address: stu.address,
+                coordinate: CLLocationCoordinate2D(latitude: stu.latitude!, longitude: stu.longitude!)
+            )
+        }
     }
 
     var body: some View {
         Group {
-            if studentsWithAddress.isEmpty {
+            if viewModel.students.isEmpty {
                 EmptyStateView(
                     systemImage: "map",
-                    title: "没有可显示的住址",
-                    message: "请先在学生资料中填写家庭住址"
+                    title: "没有学生数据",
+                    message: "请先添加学生或导入数据"
                 )
             } else {
-                VStack(spacing: 0) {
-                    mapSection
-                    statusSection
-                    addressList
+                ZStack(alignment: .bottom) {
+                    // 全屏地图
+                    Map(coordinateRegion: $region, annotationItems: pins) { pin in
+                        MapAnnotation(coordinate: pin.coordinate) {
+                            Button {
+                                selectedStudent = viewModel.students.first { $0.id == pin.id }
+                                showBottomPanel = true
+                            } label: {
+                                VStack(spacing: 2) {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .font(.title3)
+                                        .foregroundColor(.red)
+                                    Text(pin.name)
+                                        .font(.caption2.weight(.semibold))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .ignoresSafeArea(edges: .bottom)
+
+                    // 顶部统计条
+                    VStack {
+                        HStack {
+                            Spacer()
+                            HStack(spacing: 6) {
+                                Text("\(studentsWithCoord.count)")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundColor(AppTheme.Colors.accent)
+                                Text("位学生 ·")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text("\(areaCount)")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundColor(.blue)
+                                Text("个小区")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                            Spacer()
+                        }
+                        .padding(.top, 12)
+                        Spacer()
+                    }
+
+                    // 底部操作/列表面板
+                    bottomPanel
                 }
             }
         }
         .navigationTitle("分布地图")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await geocodeAll() }
-    }
-
-    private var mapSection: some View {
-        Map(coordinateRegion: $region, annotationItems: pins) { pin in
-            MapAnnotation(coordinate: pin.coordinate) {
-                VStack(spacing: 2) {
-                    Image(systemName: "mappin.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.red)
-                    Text(pin.name)
-                        .font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if !studentsNeedGeocode.isEmpty {
+                    Button {
+                        Task { await geocodeAll() }
+                    } label: {
+                        if isGeocoding {
+                            ProgressView()
+                        } else {
+                            Label("解析地址", systemImage: "location.magnifyingglass")
+                        }
+                    }
+                    .disabled(isGeocoding)
                 }
             }
         }
-        .frame(minHeight: 280)
-    }
-
-    @ViewBuilder
-    private var statusSection: some View {
-        HStack {
-            if isGeocoding {
-                ProgressView()
-                    .padding(.trailing, 4)
-                Text("正在解析学生住址…")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-            } else {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                    .font(.footnote)
-                Text("已标注 \(pins.count)/\(studentsWithAddress.count) 位学生住址")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                if !failedAddresses.isEmpty {
-                    Text("（\(failedAddresses.count) 个地址无法解析）")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
-            }
-            Spacer()
+        .onAppear { fitRegion() }
+        .sheet(item: $selectedStudent) { student in
+            StudentDetailView(studentId: student.id)
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(AppTheme.Colors.cardBackground)
     }
 
-    private var addressList: some View {
-        List {
-            ForEach(studentsWithAddress) { student in
-                HStack(spacing: 12) {
-                    StudentAvatar(name: student.name, size: 36)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(student.name)
-                            .font(.body.weight(.medium))
-                        Text(student.address)
+    // 统计不同小区/村庄数量
+    private var areaCount: Int {
+        let areas = Set(studentsWithCoord.map { stu -> String in
+            let addr = stu.address
+            // 提取乡镇/小区名（取省市区后的第一段）
+            let parts = addr.split(separator: "-")
+            if parts.count >= 3 {
+                return String(parts[2])
+            }
+            return addr
+        })
+        return areas.count
+    }
+
+    // 底部面板
+    private var bottomPanel: some View {
+        VStack(spacing: 0) {
+            // 拖拽指示条
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.gray.opacity(0.3))
+                .frame(width: 36, height: 4)
+                .padding(.top, 8)
+                .padding(.bottom, 4)
+
+            if !studentsNeedGeocode.isEmpty && !isGeocoding {
+                // 提示有未解析的地址
+                Button {
+                    Task { await geocodeAll() }
+                } label: {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text("\(studentsNeedGeocode.count) 位学生地址未解析，点击解析")
+                            .font(.footnote)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    Spacer()
-                    if pins.contains(where: { $0.name == student.name && $0.address == student.address }) {
-                        Image(systemName: "mappin.circle.fill")
-                            .foregroundColor(.red)
-                    } else if failedAddresses.contains(student.address) {
-                        Image(systemName: "exclamationmark.circle")
-                            .foregroundColor(.secondary)
-                    } else {
-                        ProgressView().controlSize(.small)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                }
+                .buttonStyle(.plain)
+            }
+
+            // 学生列表
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(viewModel.students) { student in
+                        Button {
+                            if student.latitude != nil && student.longitude != nil {
+                                selectedStudent = student
+                            }
+                        } label: {
+                            HStack(spacing: 12) {
+                                StudentAvatar(name: student.name, size: 36)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(student.name)
+                                        .font(.body.weight(.medium))
+                                        .foregroundColor(.primary)
+                                    Text(student.address.isEmpty ? "未填写地址" : student.address)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                if student.latitude != nil && student.longitude != nil {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .foregroundColor(.red)
+                                } else if !student.address.isEmpty {
+                                    Image(systemName: "clock")
+                                        .foregroundColor(.orange)
+                                } else {
+                                    Image(systemName: "minus.circle")
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                        }
+                        .buttonStyle(.plain)
+                        Divider()
+                            .padding(.leading, 64)
                     }
                 }
-                .padding(.vertical, 2)
             }
+            .frame(maxHeight: 280)
+            .background(AppTheme.Colors.cardBackground)
         }
-        .listStyle(.insetGrouped)
+        .background(AppTheme.Colors.cardBackground)
+        .cornerRadius(20, corners: [.topLeft, .topRight])
+        .shadow(color: .black.opacity(0.12), radius: 20, x: 0, y: -4)
     }
 
-    // 高德地图 Web 服务 API Key（在 https://lbs.amap.com 申请，选"Web服务"类型）
-    private let amapApiKey = "e0177c72e585f5718b4cdbc052918ecf"
-    // 叶县默认坐标（解析失败时兜底）
-    private let yexianCoordinate = CLLocationCoordinate2D(latitude: 33.87, longitude: 113.36)
+    // 调整地图区域以显示所有标注
+    private func fitRegion() {
+        guard !pins.isEmpty else { return }
+        let lats = pins.map { $0.coordinate.latitude }
+        let lons = pins.map { $0.coordinate.longitude }
+        guard let minLat = lats.min(), let maxLat = lats.max(),
+              let minLon = lons.min(), let maxLon = lons.max() else { return }
+        let center = CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2, longitude: (minLon + maxLon) / 2)
+        let span = MKCoordinateSpan(
+            latitudeDelta: max((maxLat - minLat) * 1.8, 0.05),
+            longitudeDelta: max((maxLon - minLon) * 1.8, 0.05)
+        )
+        region = MKCoordinateRegion(center: center, span: span)
+    }
 
-    // 地址预处理：去掉横杠，整理为标准地址格式
+    // MARK: - 地理编码（iOS 原生 CLGeocoder + 高德兜底）
+
+    private let amapApiKey = "e0177c72e585f5718b4cdbc052918ecf"
+    private let geocoder = CLGeocoder()
+
+    // 地址预处理
     private func normalizedAddress(_ raw: String) -> String {
         var addr = raw.replacingOccurrences(of: "-", with: "")
         addr = addr.replacingOccurrences(of: "  ", with: " ")
         return addr.trimmingCharacters(in: .whitespaces)
     }
 
-    // 调用高德地图地理编码 API，精准定位中国大陆地址
+    // iOS 原生 CLGeocoder 解析
+    private func geocodeWithApple(_ address: String) async -> CLLocationCoordinate2D? {
+        return await withCheckedContinuation { continuation in
+            geocoder.geocodeAddressString(address) { placemarks, error in
+                if let location = placemarks?.first?.location {
+                    continuation.resume(returning: location.coordinate)
+                } else {
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+    }
+
+    // 高德地图 API 兜底解析
     private func geocodeWithAMap(_ address: String) async -> CLLocationCoordinate2D? {
-        guard !amapApiKey.isEmpty, amapApiKey != "e0177c72e585f5718b4cdbc052918ecf" else { return nil }
+        guard !amapApiKey.isEmpty else { return nil }
         let encoded = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? address
         let urlStr = "https://restapi.amap.com/v3/geocode/geo?key=\(amapApiKey)&address=\(encoded)&city=平顶山"
         guard let url = URL(string: urlStr) else { return nil }
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let status = json["status"] as? String, status == "1",
                let geocodes = json["geocodes"] as? [[String: Any]],
                let first = geocodes.first,
                let location = first["location"] as? String {
@@ -160,52 +298,56 @@ struct ClassMapView: View {
         return nil
     }
 
-    // 逐个调用高德 API 解析地址，失败用叶县坐标兜底
+    // 批量解析所有未解析的学生地址
     private func geocodeAll() async {
-        guard pins.isEmpty, !isGeocoding, !studentsWithAddress.isEmpty else { return }
+        guard !isGeocoding, !studentsNeedGeocode.isEmpty else { return }
         await MainActor.run { isGeocoding = true }
-        var resolved: [AddressPin] = []
-        var failures: [String] = []
 
-        for (index, student) in studentsWithAddress.enumerated() {
-            let address = student.address
-            let normalized = normalizedAddress(address)
-            if let coord = await geocodeWithAMap(normalized) {
-                resolved.append(AddressPin(name: student.name, address: address, coordinate: coord))
-            } else {
-                // 高德解析失败，用叶县坐标兜底
-                resolved.append(AddressPin(name: student.name, address: address, coordinate: yexianCoordinate))
-                failures.append(address)
+        for student in studentsNeedGeocode {
+            let address = normalizedAddress(student.address)
+            var coord: CLLocationCoordinate2D?
+
+            // 先用 iOS 原生 CLGeocoder
+            coord = await geocodeWithApple(address)
+
+            // 失败则用高德兜底
+            if coord == nil {
+                coord = await geocodeWithAMap(address)
             }
-            // 高德 QPS 限制，每 5 个请求暂停 0.5 秒
-            if (index + 1) % 5 == 0 {
-                try? await Task.sleep(nanoseconds: 500_000_000)
+
+            // 解析成功，保存坐标到学生数据
+            if let coord = coord {
+                if let index = viewModel.students.firstIndex(where: { $0.id == student.id }) {
+                    viewModel.students[index].latitude = coord.latitude
+                    viewModel.students[index].longitude = coord.longitude
+                }
             }
+
+            // 防限流，每个请求间隔 0.3 秒
+            try? await Task.sleep(nanoseconds: 300_000_000)
         }
 
         await MainActor.run {
-            pins = resolved
-            failedAddresses = Array(Set(failures))
             isGeocoding = false
-            fitRegion(to: resolved)
+            viewModel.save()
+            fitRegion()
         }
     }
+}
 
-    // 让所有标记尽量都落在可视范围内
-    private func fitRegion(to pins: [AddressPin]) {
-        guard !pins.isEmpty else { return }
-        let lats = pins.map { $0.coordinate.latitude }
-        let lons = pins.map { $0.coordinate.longitude }
-        guard let minLat = lats.min(), let maxLat = lats.max(),
-              let minLon = lons.min(), let maxLon = lons.max() else { return }
-        let center = CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2, longitude: (minLon + maxLon) / 2)
-        var span = MKCoordinateSpan(
-            latitudeDelta: max((maxLat - minLat) * 1.6, 0.02),
-            longitudeDelta: max((maxLon - minLon) * 1.6, 0.02)
-        )
-        // 防止跨度异常
-        span.latitudeDelta = min(span.latitudeDelta, 90)
-        span.longitudeDelta = min(span.longitudeDelta, 180)
-        region = MKCoordinateRegion(center: center, span: span)
+// 圆角扩展
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
     }
 }

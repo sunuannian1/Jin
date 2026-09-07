@@ -34,6 +34,8 @@ struct Student: Identifiable, Codable {
     var seatRow: Int               // 座位行（0=未分配）
     var seatCol: Int               // 座位列（0=未分配）
     var dormitory: String          // 宿舍号
+    var latitude: Double?          // 家庭住址纬度（解析后保存）
+    var longitude: Double?         // 家庭住址经度（解析后保存）
     var notes: String              // 备注
 
     enum Gender: String, Codable, CaseIterable {
@@ -46,7 +48,7 @@ struct Student: Identifiable, Codable {
          motherName: String = "", motherPhone: String = "",
          ethnicity: String = "汉", birthDate: String = "", idCardNumber: String = "",
          address: String = "", groupNumber: Int = 1, seatRow: Int = 0, seatCol: Int = 0,
-         dormitory: String = "", notes: String = "") {
+         dormitory: String = "", latitude: Double? = nil, longitude: Double? = nil, notes: String = "") {
         self.id = id
         self.name = name
         self.studentNumber = studentNumber
@@ -64,6 +66,8 @@ struct Student: Identifiable, Codable {
         self.seatRow = seatRow
         self.seatCol = seatCol
         self.dormitory = dormitory
+        self.latitude = latitude
+        self.longitude = longitude
         self.notes = notes
     }
 }

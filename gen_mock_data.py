@@ -72,6 +72,10 @@ for i, s in enumerate(students):
     seat_col = i % COLS_PER_ROW + 1
     group_number = (i % 4) + 1
 
+    # 模拟坐标：叶县范围内随机分布（纬度33.6-34.0，经度113.1-113.6）
+    latitude = round(random.uniform(33.62, 33.98), 6)
+    longitude = round(random.uniform(113.15, 113.55), 6)
+
     # 写入 Excel
     row = i + 3
     ws_src.cell(row, 1, i + 1)
@@ -106,6 +110,8 @@ for i, s in enumerate(students):
         'seatRow': seat_row,
         'seatCol': seat_col,
         'dormitory': dormitory,
+        'latitude': latitude,
+        'longitude': longitude,
         'notes': ''
     })
 
