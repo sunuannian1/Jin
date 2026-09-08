@@ -16,7 +16,7 @@ struct ClassInfo: Codable {
 }
 
 // MARK: - 学生
-struct Student: Identifiable, Codable {
+struct Student: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
     var studentNumber: String      // 学号
