@@ -1,14 +1,24 @@
-﻿import SwiftUI
+import SwiftUI
+import UniformTypeIdentifiers
 
-// 座位表（网格排座）
+// 座位表（动态数量 + 拖拽调整）
 struct SeatView: View {
     @EnvironmentObject var viewModel: AppViewModel
-    @State private var selectingCell: SeatCell?
-    @State private var occupiedStudent: Student?
-    @State private var showingSeatDialog = false
+    @State private var draggedStudent: Student?
 
-    private let rows = 7
-    private let cols = 5
+    // 动态列数，根据学生数量自适应
+    private var cols: Int {
+        let count = viewModel.students.count
+        if count <= 30 { return 6 }
+        if count <= 48 { return 7 }
+        return 8
+    }
+
+    // 动态行数
+    private var rows: Int {
+        guard !viewModel.students.isEmpty else { return 1 }
+        return Int(ceil(Double(viewModel.students.count) / Double(cols)))
+    }
 
     var body: some View {
         ScrollView {
@@ -19,16 +29,28 @@ struct SeatView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: 260)
                     .padding(.vertical, 12)
-                    .background(Color.accentColor)
+                    .background(AppTheme.Colors.accent)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .padding(.bottom, 8)
+
+                // 提示
+                Text("共 \(viewModel.students.count) 人 · \(rows)排\(cols)列 · 长按拖动可交换座位")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, 4)
 
                 // 座位网格
                 VStack(spacing: 6) {
                     ForEach(1...rows, id: \.self) { row in
                         HStack(spacing: 6) {
                             ForEach(1...cols, id: \.self) { col in
-                                cell(row: row, col: col)
+                                if row * cols - cols + col <= viewModel.students.count || studentAt(row: row, col: col) != nil {
+                                    seatCell(row: row, col: col)
+                                } else {
+                                    Color.clear
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 54)
+                                }
                             }
                         }
                     }
@@ -46,148 +68,136 @@ struct SeatView: View {
                 .disabled(viewModel.students.isEmpty)
             }
         }
-        .sheet(item: $selectingCell) { cell in
-            NavigationStack {
-                SeatPickView(cell: cell)
-            }
-        }
-        .confirmationDialog("\(occupiedStudent?.name ?? "") 的座位", isPresented: $showingSeatDialog, titleVisibility: .visible) {
-            Button("移出座位") {
-                if let student = occupiedStudent {
-                    clearSeat(of: student)
-                }
-            }
-            Button("取消", role: .cancel) {}
-        }
     }
 
+    // 获取指定座位的学生
+    private func studentAt(row: Int, col: Int) -> Student? {
+        viewModel.students.first { $0.seatRow == row && $0.seatCol == col }
+    }
+
+    // 座位格子
     @ViewBuilder
-    private func cell(row: Int, col: Int) -> some View {
-        let student = viewModel.students.first { $0.seatRow == row && $0.seatCol == col }
-        Button {
+    private func seatCell(row: Int, col: Int) -> some View {
+        let student = studentAt(row: row, col: col)
+        let isDragging = draggedStudent?.id == student?.id
+
+        Group {
             if let student = student {
-                occupiedStudent = student
-                showingSeatDialog = true
+                VStack(spacing: 2) {
+                    Text(student.name)
+                        .font(.caption.weight(.semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                    Text("#\(student.studentNumber)")
+                        .font(.system(size: 8))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(student.gender == .female ? Color.pink.opacity(0.12) : AppTheme.Colors.accent.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(student.gender == .female ? Color.pink.opacity(0.5) : AppTheme.Colors.accent.opacity(0.4), lineWidth: 1)
+                )
+                .scaleEffect(isDragging ? 1.1 : 1.0)
+                .shadow(color: isDragging ? .black.opacity(0.2) : .clear, radius: isDragging ? 8 : 0)
+                .onDrag {
+                    draggedStudent = student
+                    return NSItemProvider(object: student.id.uuidString as NSString)
+                }
+                .onDrop(of: [UTType.text], delegate: SeatDropDelegate(
+                    targetRow: row,
+                    targetCol: col,
+                    viewModel: viewModel,
+                    draggedStudent: $draggedStudent
+                ))
             } else {
-                selectingCell = SeatCell(row: row, col: col)
-            }
-        } label: {
-            Group {
-                if let student = student {
-                    VStack(spacing: 2) {
-                        Text(student.name)
-                            .font(.caption.weight(.semibold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.6)
-                        Text("#\(student.studentNumber)")
-                            .font(.system(size: 8))
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
+                Rectangle()
+                    .fill(AppTheme.Colors.cardBackground)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
-                    .background(Color.accentColor.opacity(0.15))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.accentColor.opacity(0.4), lineWidth: 1))
-                } else {
-                    Rectangle()
-                        .fill(AppTheme.Colors.cardBackground)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(Color.gray.opacity(0.2), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                    )
+                    .onDrop(of: [UTType.text], delegate: SeatDropDelegate(
+                        targetRow: row,
+                        targetCol: col,
+                        viewModel: viewModel,
+                        draggedStudent: $draggedStudent
+                    ))
             }
         }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
     }
 
-    private func assign(_ student: Student, to row: Int, col: Int) {
-        if let i = viewModel.students.firstIndex(where: { $0.id == student.id }) {
-            viewModel.students[i].seatRow = row
-            viewModel.students[i].seatCol = col
-        }
-    }
-
-    private func clearSeat(of student: Student) {
-        if let i = viewModel.students.firstIndex(where: { $0.id == student.id }) {
-            viewModel.students[i].seatRow = 0
-            viewModel.students[i].seatCol = 0
-        }
-    }
-
-    // 把未排座的学生按顺序填入空位
+    // 自动排座：按学生顺序填满所有座位
     private func autoAssign() {
-        let unassigned = viewModel.students.filter { $0.seatRow == 0 && $0.seatCol == 0 }
-        var emptySlots: [(Int, Int)] = []
+        let sorted = viewModel.students.sorted { s1, s2 in
+            // 先按座位号排，没座位的排后面
+            if s1.seatRow != s2.seatRow { return s1.seatRow < s2.seatRow }
+            if s1.seatCol != s2.seatCol { return s1.seatCol < s2.seatCol }
+            return s1.name < s2.name
+        }
+        var index = 0
         for row in 1...rows {
             for col in 1...cols {
-                let occupied = viewModel.students.contains { $0.seatRow == row && $0.seatCol == col }
-                if !occupied { emptySlots.append((row, col)) }
-            }
-        }
-        for (index, student) in unassigned.prefix(emptySlots.count).enumerated() {
-            assign(student, to: emptySlots[index].0, col: emptySlots[index].1)
-        }
-    }
-}
-
-// 座位格子标识
-struct SeatCell: Identifiable {
-    let id = UUID()
-    let row: Int
-    let col: Int
-}
-
-// 选择学生放入座位
-struct SeatPickView: View {
-    @EnvironmentObject var viewModel: AppViewModel
-    @Environment(\.dismiss) private var dismiss
-    let cell: SeatCell
-
-    private var candidates: [Student] {
-        viewModel.students.filter { $0.seatRow == 0 && $0.seatCol == 0 }
-    }
-
-    var body: some View {
-        Group {
-            if candidates.isEmpty {
-                EmptyStateView(
-                    systemImage: "person.crop.circle.badge.plus",
-                    title: "没有可安排的学生",
-                    message: "所有学生都已排座，或请先在「学生名册」添加学生"
-                )
-            } else {
-                List(candidates) { student in
-                    Button {
-                        if let i = viewModel.students.firstIndex(where: { $0.id == student.id }) {
-                            viewModel.students[i].seatRow = cell.row
-                            viewModel.students[i].seatCol = cell.col
-                        }
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 12) {
-                            StudentAvatar(name: student.name, size: 36)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(student.name)
-                                Text("#\(student.studentNumber)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: "arrow.up.forward")
-                                .foregroundColor(.accentColor)
-                        }
-                    }
-                    .buttonStyle(.plain)
+                guard index < sorted.count else { return }
+                if let i = viewModel.students.firstIndex(where: { $0.id == sorted[index].id }) {
+                    viewModel.students[i].seatRow = row
+                    viewModel.students[i].seatCol = col
                 }
-            }
-        }
-        .navigationTitle("安排到 第\(cell.row)排\(cell.col)座")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("取消") { dismiss() }
+                index += 1
             }
         }
     }
+}
+
+// 拖拽接收代理
+struct SeatDropDelegate: DropDelegate {
+    let targetRow: Int
+    let targetCol: Int
+    let viewModel: AppViewModel
+    @Binding var draggedStudent: Student?
+
+    func performDrop(info: DropInfo) -> Bool {
+        guard let item = info.itemProviders(for: [UTType.text]).first else { return false }
+        item.loadObject(ofClass: NSString.self) { provider, error in
+            guard let idString = provider as? String,
+                  let uuid = UUID(uuidString: idString),
+                  let dragged = viewModel.students.first(where: { $0.id == uuid }) else {
+                DispatchQueue.main.async { draggedStudent = nil }
+                return
+            }
+            DispatchQueue.main.async {
+                // 找到目标座位的学生
+                if let target = viewModel.students.first(where: { $0.seatRow == targetRow && $0.seatCol == targetCol }) {
+                    // 交换两个学生的座位
+                    if let draggedIndex = viewModel.students.firstIndex(where: { $0.id == dragged.id }),
+                       let targetIndex = viewModel.students.firstIndex(where: { $0.id == target.id }) {
+                        let tempRow = viewModel.students[draggedIndex].seatRow
+                        let tempCol = viewModel.students[draggedIndex].seatCol
+                        viewModel.students[draggedIndex].seatRow = targetRow
+                        viewModel.students[draggedIndex].seatCol = targetCol
+                        viewModel.students[targetIndex].seatRow = tempRow
+                        viewModel.students[targetIndex].seatCol = tempCol
+                    }
+                } else {
+                    // 目标座位为空，直接移动
+                    if let draggedIndex = viewModel.students.firstIndex(where: { $0.id == dragged.id }) {
+                        viewModel.students[draggedIndex].seatRow = targetRow
+                        viewModel.students[draggedIndex].seatCol = targetCol
+                    }
+                }
+                draggedStudent = nil
+            }
+        }
+        return true
+    }
+
+    func dropEntered(info: DropInfo) {}
+    func dropExited(info: DropInfo) {}
 }
