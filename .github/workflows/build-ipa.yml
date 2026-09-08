@@ -43,12 +43,23 @@ jobs:
             --output-partial-info-plist /tmp/asset-info.plist \
             Assets.xcassets 2>&1 || echo "actool warning, continuing"
           ls -la build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Assets.car 2>/dev/null || echo "No Assets.car generated"
-          # Merge icon info into Info.plist
+          # Merge icon info into Info.plist using Python
           if [ -f /tmp/asset-info.plist ]; then
             echo "=== asset-info.plist ==="
             cat /tmp/asset-info.plist
-            plutil -merge /tmp/asset-info.plist build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Info.plist
-            echo "Merged icon info into Info.plist"
+            python3 -c "
+import plistlib
+with open('/tmp/asset-info.plist', 'rb') as f:
+    asset_info = plistlib.load(f)
+info_path = 'build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Info.plist'
+with open(info_path, 'rb') as f:
+    info = plistlib.load(f)
+info.update(asset_info)
+with open(info_path, 'wb') as f:
+    plistlib.dump(info, f)
+print('Merged icon info into Info.plist')
+print('CFBundleIcons:', 'CFBundleIcons' in info)
+"
           fi
 
       - name: Package IPA
