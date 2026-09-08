@@ -21,7 +21,7 @@ struct ClassMapView: View {
     )
     @State private var isGeocoding = false
     @State private var selectedStudent: Student?
-    @State private var panelExpanded = false  // 抽屉是否展开，默认收起
+    @State private var hasAutoGeocoded = false
 
     // 有坐标的学生
     private var studentsWithCoord: [Student] {
@@ -49,6 +49,24 @@ struct ClassMapView: View {
         }
     }
 
+    // 选中学生附近的3个学生（按距离排序）
+    private var nearbyStudents: [Student] {
+        guard let selected = selectedStudent,
+              let selLat = selected.latitude, let selLon = selected.longitude else {
+            return []
+        }
+        let selectedCoord = CLLocation(latitude: selLat, longitude: selLon)
+        return studentsWithCoord
+            .filter { $0.id != selected.id }
+            .map { stu -> (student: Student, distance: CLLocationDistance) in
+                let coord = CLLocation(latitude: stu.latitude!, longitude: stu.longitude!)
+                return (stu, selectedCoord.distance(from: coord))
+            }
+            .sorted { $0.distance < $1.distance }
+            .prefix(3)
+            .map { $0.student }
+    }
+
     var body: some View {
         Group {
             if viewModel.students.isEmpty {
@@ -64,7 +82,6 @@ struct ClassMapView: View {
                         MapAnnotation(coordinate: pin.coordinate) {
                             Button {
                                 selectedStudent = viewModel.students.first { $0.id == pin.id }
-                                panelExpanded = true
                             } label: {
                                 VStack(spacing: 2) {
                                     Image(systemName: "person.circle.fill")
@@ -111,39 +128,44 @@ struct ClassMapView: View {
                     }
 
                     // 图例（粉蓝区分男女）
-                    VStack {
-                        Spacer()
-                        HStack {
+                    if selectedStudent == nil {
+                        VStack {
                             Spacer()
-                            HStack(spacing: 12) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "person.circle.fill")
-                                        .foregroundColor(.blue)
-                                        .font(.caption)
-                                    Text("男")
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
+                            HStack {
+                                Spacer()
+                                HStack(spacing: 12) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "person.circle.fill")
+                                            .foregroundColor(.blue)
+                                            .font(.caption)
+                                        Text("男")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "person.circle.fill")
+                                            .foregroundColor(.pink)
+                                            .font(.caption)
+                                        Text("女")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
                                 }
-                                HStack(spacing: 4) {
-                                    Image(systemName: "person.circle.fill")
-                                        .foregroundColor(.pink)
-                                        .font(.caption)
-                                    Text("女")
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
-                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Capsule())
+                                .padding(.trailing, 16)
+                                .padding(.bottom, 20)
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Capsule())
-                            .padding(.trailing, 16)
-                            .padding(.bottom, panelExpanded ? 320 : 70)
                         }
                     }
 
-                    // 底部可收起抽屉
-                    bottomPanel
+                    // 选中学生时显示抽屉（含该学生 + 附近3人）
+                    if selectedStudent != nil {
+                        studentPanel
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
             }
         }
@@ -151,24 +173,26 @@ struct ClassMapView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                if !studentsNeedGeocode.isEmpty {
+                if isGeocoding {
+                    ProgressView()
+                } else if !studentsNeedGeocode.isEmpty {
                     Button {
                         Task { await geocodeAll() }
                     } label: {
-                        if isGeocoding {
-                            ProgressView()
-                        } else {
-                            Label("解析地址", systemImage: "location.magnifyingglass")
-                        }
+                        Label("解析地址", systemImage: "location.magnifyingglass")
                     }
-                    .disabled(isGeocoding)
                 }
             }
         }
-        .onAppear { fitRegion() }
-        .sheet(item: $selectedStudent) { student in
-            StudentDetailView(studentId: student.id)
+        .onAppear {
+            fitRegion()
+            // 自动解析未解析的地址
+            if !hasAutoGeocoded && !studentsNeedGeocode.isEmpty {
+                hasAutoGeocoded = true
+                Task { await geocodeAll() }
+            }
         }
+        .animation(.easeInOut(duration: 0.25), value: selectedStudent)
     }
 
     // 统计不同小区/村庄数量
@@ -184,133 +208,134 @@ struct ClassMapView: View {
         return areas.count
     }
 
-    // 底部抽屉面板（可收起）
-    private var bottomPanel: some View {
+    // 选中学生面板（含附近3人）
+    private var studentPanel: some View {
         VStack(spacing: 0) {
-            // 顶部拖拽条 + 标题（始终可见，点击切换展开）
-            Button {
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    panelExpanded.toggle()
-                }
-            } label: {
-                VStack(spacing: 4) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 36, height: 4)
-                        .padding(.top, 8)
+            // 顶部拖拽条
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.gray.opacity(0.3))
+                .frame(width: 36, height: 4)
+                .padding(.top, 8)
 
-                    HStack {
-                        Text("学生列表")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundColor(.primary)
-                        Spacer()
-                        if !studentsNeedGeocode.isEmpty && !isGeocoding {
-                            Text("\(studentsNeedGeocode.count) 位未解析")
-                                .font(.caption)
-                                .foregroundColor(.orange)
-                        }
-                        Image(systemName: panelExpanded ? "chevron.down" : "chevron.up")
-                            .font(.caption.weight(.semibold))
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 10)
-                }
-            }
-            .buttonStyle(.plain)
-
-            // 展开时显示内容
-            if panelExpanded {
-                // 选中学生的导航按钮
-                if let selected = selectedStudent,
-                   let lat = selected.latitude, let lon = selected.longitude {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(selected.name)
-                                .font(.subheadline.weight(.semibold))
-                            Text(selected.address)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
-                        Spacer()
-                        Button {
-                            openNavigation(for: selected)
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
-                                Text("导航")
+            ScrollView {
+                VStack(spacing: 0) {
+                    // 选中学生详情
+                    if let selected = selectedStudent {
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                StudentAvatar(name: selected.name, size: 44)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 6) {
+                                        Text(selected.name)
+                                            .font(.headline.weight(.semibold))
+                                        Circle()
+                                            .fill(selected.gender == .female ? Color.pink : Color.blue)
+                                            .frame(width: 7, height: 7)
+                                    }
+                                    Text(selected.address)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(2)
+                                }
+                                Spacer()
+                                Button {
+                                    openNavigation(for: selected)
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
+                                        Text("导航")
+                                    }
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(AppTheme.Colors.accent)
+                                    .clipShape(Capsule())
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .font(.footnote.weight(.semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(AppTheme.Colors.accent)
-                            .clipShape(Capsule())
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+
+                        Divider()
+                            .padding(.horizontal, 16)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
 
-                    Divider()
-                }
+                    // 附近3个学生
+                    if !nearbyStudents.isEmpty {
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack {
+                                Text("附近同学")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 10)
+                            .padding(.bottom, 4)
 
-                // 学生列表
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(viewModel.students) { student in
-                            Button {
-                                if student.latitude != nil && student.longitude != nil {
+                            ForEach(nearbyStudents) { student in
+                                Button {
                                     selectedStudent = student
                                     // 移动地图到该学生
-                                    withAnimation {
-                                        region = MKCoordinateRegion(
-                                            center: CLLocationCoordinate2D(latitude: student.latitude!, longitude: student.longitude!),
-                                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-                                        )
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 12) {
-                                    StudentAvatar(name: student.name, size: 36)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        HStack(spacing: 6) {
-                                            Text(student.name)
-                                                .font(.body.weight(.medium))
-                                                .foregroundColor(.primary)
-                                            Circle()
-                                                .fill(student.gender == .female ? Color.pink : Color.blue)
-                                                .frame(width: 6, height: 6)
+                                    if let lat = student.latitude, let lon = student.longitude {
+                                        withAnimation {
+                                            region = MKCoordinateRegion(
+                                                center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                                                span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                            )
                                         }
-                                        Text(student.address.isEmpty ? "未填写地址" : student.address)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                            .lineLimit(1)
                                     }
-                                    Spacer()
-                                    if student.latitude != nil && student.longitude != nil {
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        StudentAvatar(name: student.name, size: 36)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            HStack(spacing: 6) {
+                                                Text(student.name)
+                                                    .font(.body.weight(.medium))
+                                                    .foregroundColor(.primary)
+                                                Circle()
+                                                    .fill(student.gender == .female ? Color.pink : Color.blue)
+                                                    .frame(width: 6, height: 6)
+                                            }
+                                            Text(student.address)
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                        Spacer()
                                         Image(systemName: "location.fill")
                                             .foregroundColor(student.gender == .female ? .pink : .blue)
-                                    } else if !student.address.isEmpty {
-                                        Image(systemName: "clock")
-                                            .foregroundColor(.orange)
-                                    } else {
-                                        Image(systemName: "minus.circle")
-                                            .foregroundColor(.gray)
+                                            .font(.caption)
                                     }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
+                                .buttonStyle(.plain)
+                                Divider()
+                                    .padding(.leading, 64)
                             }
-                            .buttonStyle(.plain)
-                            Divider()
-                                .padding(.leading, 64)
                         }
                     }
+
+                    // 关闭按钮
+                    Button {
+                        selectedStudent = nil
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("关闭")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                        .padding(.vertical, 12)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .frame(maxHeight: 240)
             }
+            .frame(maxHeight: 320)
         }
         .background(AppTheme.Colors.cardBackground)
         .cornerRadius(20, corners: [.topLeft, .topRight])
@@ -375,17 +400,11 @@ struct ClassMapView: View {
                let status = json["status"] as? String, status == "1",
                let geocodes = json["geocodes"] as? [[String: Any]],
                let first = geocodes.first,
-               let location = first["location"] as? String,
-               let level = first["level"] as? String {
+               let location = first["location"] as? String {
                 let parts = location.split(separator: ",")
                 if parts.count == 2,
                    let lon = Double(parts[0]),
                    let lat = Double(parts[1]) {
-                    // 优先使用门牌号/POI级别的精准结果
-                    if level.contains("门牌号") || level.contains("POI") || level.contains("兴趣点") {
-                        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                    }
-                    // 乡镇级别也接受
                     return CLLocationCoordinate2D(latitude: lat, longitude: lon)
                 }
             }
