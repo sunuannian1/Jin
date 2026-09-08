@@ -1,6 +1,6 @@
-﻿import SwiftUI
+import SwiftUI
 
-// 班级课表（周视图）
+// 班级课表（周视图，含早读）
 struct ScheduleView: View {
     @EnvironmentObject var viewModel: AppViewModel
     @State private var selectedSlot: ScheduleSlot?
@@ -15,7 +15,7 @@ struct ScheduleView: View {
                 HStack(spacing: 2) {
                     Text("节")
                         .font(.caption.weight(.bold))
-                        .frame(width: 30, height: 34)
+                        .frame(width: 36, height: 34)
                     ForEach(1...7, id: \.self) { weekday in
                         Text(weekdays[weekday - 1])
                             .font(.caption.weight(.semibold))
@@ -24,13 +24,35 @@ struct ScheduleView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     }
                 }
-                // 节次
+
+                // 早读行（period = 0）
+                HStack(spacing: 2) {
+                    VStack(spacing: 0) {
+                        Text("早读")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundColor(.orange)
+                        Text("7:00")
+                            .font(.system(size: 8))
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(width: 36, height: 48)
+                    ForEach(1...7, id: \.self) { weekday in
+                        cell(weekday: weekday, period: 0)
+                    }
+                }
+
+                // 第1-8节
                 ForEach(1...8, id: \.self) { period in
                     HStack(spacing: 2) {
-                        Text("\(period)")
-                            .font(.caption2.weight(.medium))
-                            .foregroundColor(.secondary)
-                            .frame(width: 30, height: 52)
+                        VStack(spacing: 0) {
+                            Text("\(period)")
+                                .font(.caption2.weight(.medium))
+                                .foregroundColor(.secondary)
+                            Text(periodTime(period))
+                                .font(.system(size: 8))
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(width: 36, height: 52)
                         ForEach(1...7, id: \.self) { weekday in
                             cell(weekday: weekday, period: period)
                         }
@@ -56,9 +78,16 @@ struct ScheduleView: View {
         }
     }
 
+    // 节次对应时间
+    private func periodTime(_ period: Int) -> String {
+        let times = ["8:00", "9:00", "10:10", "11:10", "14:30", "15:30", "16:40", "17:40"]
+        guard period >= 1 && period <= 8 else { return "" }
+        return times[period - 1]
+    }
+
     private func printSchedule() {
         let weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
-        let periods = Array(1...8)
+        let periods = Array(0...8)
         var schedule: [[String?]] = []
 
         for period in periods {
@@ -98,14 +127,14 @@ struct ScheduleView: View {
                                 .minimumScaleFactor(0.6)
                         }
                     }
-                    .frame(width: colWidth, height: 52)
-                    .background(courseColor(course.subject).opacity(0.2))
+                    .frame(width: colWidth, height: period == 0 ? 48 : 52)
+                    .background(courseColor(course.subject).opacity(period == 0 ? 0.15 : 0.2))
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(courseColor(course.subject), lineWidth: 1))
                 } else {
                     Rectangle()
-                        .fill(AppTheme.Colors.cardBackground)
-                        .frame(width: colWidth, height: 52)
+                        .fill(period == 0 ? Color.orange.opacity(0.05) : AppTheme.Colors.cardBackground)
+                        .frame(width: colWidth, height: period == 0 ? 48 : 52)
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
             }
@@ -145,11 +174,15 @@ struct CourseEditSheet: View {
         viewModel.courses(for: weekday).first { $0.period == period }
     }
 
+    private var periodLabel: String {
+        period == 0 ? "早读" : "第\(period)节"
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 if existing != nil {
-                    Section("第\(period)节 · 已有课程") {
+                    Section("\(periodLabel) · 已有课程") {
                         Picker("科目", selection: $subject) {
                             ForEach(viewModel.classInfo.subjects, id: \.self) { s in
                                 Text(s).tag(s)
@@ -169,7 +202,7 @@ struct CourseEditSheet: View {
                         }
                     }
                 } else {
-                    Section("第\(period)节 · 添加课程") {
+                    Section("\(periodLabel) · 添加课程") {
                         Picker("科目", selection: $subject) {
                             ForEach(viewModel.classInfo.subjects, id: \.self) { s in
                                 Text(s).tag(s)
@@ -180,7 +213,7 @@ struct CourseEditSheet: View {
                     }
                 }
             }
-            .navigationTitle("\(weekdayName(weekday)) 第\(period)节")
+            .navigationTitle("\(weekdayName(weekday)) \(periodLabel)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
