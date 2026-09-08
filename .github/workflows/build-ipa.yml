@@ -43,6 +43,13 @@ jobs:
             --output-partial-info-plist /tmp/asset-info.plist \
             Assets.xcassets 2>&1 || echo "actool warning, continuing"
           ls -la build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Assets.car 2>/dev/null || echo "No Assets.car generated"
+          # Merge icon info into Info.plist
+          if [ -f /tmp/asset-info.plist ]; then
+            echo "=== asset-info.plist ==="
+            cat /tmp/asset-info.plist
+            plutil -merge /tmp/asset-info.plist build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Info.plist
+            echo "Merged icon info into Info.plist"
+          fi
 
       - name: Package IPA
         run: |
