@@ -43,26 +43,10 @@ jobs:
             --output-partial-info-plist /tmp/asset-info.plist \
             Assets.xcassets 2>&1 || echo "actool warning, continuing"
           ls -la build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Assets.car 2>/dev/null || echo "No Assets.car generated"
-          # Merge icon info into Info.plist using PlistBuddy
           INFO_PLIST="build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Info.plist"
           if [ -f /tmp/asset-info.plist ] && [ -f "$INFO_PLIST" ]; then
-            echo "=== Merging asset info ==="
-            # Convert asset-info to XML for reading
             plutil -convert xml1 /tmp/asset-info.plist
-            # Use Python to merge (safer than PlistBuddy for complex keys)
-            cat > /tmp/merge_plist.py << 'PYEOF'
-import plistlib
-with open('/tmp/asset-info.plist', 'rb') as f:
-    asset_info = plistlib.load(f)
-info_path = 'build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Info.plist'
-with open(info_path, 'rb') as f:
-    info = plistlib.load(f)
-info.update(asset_info)
-with open(info_path, 'wb') as f:
-    plistlib.dump(info, f)
-print('Merged. CFBundleIcons:', 'CFBundleIcons' in info)
-PYEOF
-            python3 /tmp/merge_plist.py
+            python3 -c "import plistlib; a=plistlib.load(open('/tmp/asset-info.plist','rb')); i=plistlib.load(open('$INFO_PLIST','rb')); i.update(a); plistlib.dump(i, open('$INFO_PLIST','wb')); print('Merged. CFBundleIcons:', 'CFBundleIcons' in i)"
           fi
 
       - name: Package IPA
