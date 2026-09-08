@@ -1,60 +1,150 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-// 座位表（动态数量 + 拖拽调整）
+// 座位表（真实教室布局：黑板、讲台、中间过道、窗户）
 struct SeatView: View {
     @EnvironmentObject var viewModel: AppViewModel
     @State private var draggedStudent: Student?
 
-    // 动态列数，根据学生数量自适应
-    private var cols: Int {
-        let count = viewModel.students.count
-        if count <= 30 { return 6 }
-        if count <= 48 { return 7 }
-        return 8
-    }
+    // 每组列数（左右各一组）
+    private let colsPerGroup = 4
+    // 总列数 = 左组 + 过道 + 右组
+    private var totalCols: Int { colsPerGroup * 2 + 1 } // +1 是过道
 
     // 动态行数
     private var rows: Int {
         guard !viewModel.students.isEmpty else { return 1 }
-        return Int(ceil(Double(viewModel.students.count) / Double(cols)))
+        return Int(ceil(Double(viewModel.students.count) / Double(colsPerGroup * 2)))
     }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 8) {
+            VStack(spacing: 0) {
+                // 教室顶部：窗户标注
+                HStack {
+                    Label("窗户", systemImage: "window.ceiling")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Label("门", systemImage: "door.left.hand.open")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 4)
+
+                // 黑板
+                VStack(spacing: 4) {
+                    Text("黑  板")
+                        .font(.caption.weight(.semibold))
+                        .foregroundColor(.white.opacity(0.9))
+                    Text("———————————————")
+                        .font(.system(size: 8))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(
+                    LinearGradient(colors: [Color(red: 0.25, green: 0.45, blue: 0.32), Color(red: 0.2, green: 0.38, blue: 0.28)], startPoint: .top, endPoint: .bottom)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .padding(.horizontal, 24)
+
                 // 讲台
-                Text("讲台")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: 260)
-                    .padding(.vertical, 12)
-                    .background(AppTheme.Colors.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .padding(.bottom, 8)
+                HStack {
+                    Spacer()
+                    Text("讲  台")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 100, height: 22)
+                        .background(AppTheme.Colors.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                    Spacer()
+                }
+                .padding(.top, 6)
+                .padding(.bottom, 12)
 
-                // 提示
-                Text("共 \(viewModel.students.count) 人 · \(rows)排\(cols)列 · 长按拖动可交换座位")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.bottom, 4)
+                // 提示信息
+                HStack {
+                    Text("共 \(viewModel.students.count) 人")
+                    Text("·")
+                    Text("\(rows)排 × 8座")
+                    Text("·")
+                    Text("长按拖动交换")
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.bottom, 8)
 
-                // 座位网格
+                // 座位区域（左右两组 + 中间过道）
                 VStack(spacing: 6) {
                     ForEach(1...rows, id: \.self) { row in
-                        HStack(spacing: 6) {
-                            ForEach(1...cols, id: \.self) { col in
-                                if row * cols - cols + col <= viewModel.students.count || studentAt(row: row, col: col) != nil {
-                                    seatCell(row: row, col: col)
-                                } else {
-                                    Color.clear
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 54)
-                                }
+                        HStack(spacing: 0) {
+                            // 左组座位
+                            ForEach(1...colsPerGroup, id: \.self) { col in
+                                seatCell(row: row, col: col, group: .left)
+                            }
+
+                            // 中间过道
+                            Text("过\n道")
+                                .font(.system(size: 8))
+                                .foregroundColor(.secondary.opacity(0.5))
+                                .frame(width: 20, height: 52)
+                                .background(Color.gray.opacity(0.05))
+                                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+
+                            // 右组座位
+                            ForEach(1...colsPerGroup, id: \.self) { col in
+                                seatCell(row: row, col: col + colsPerGroup, group: .right)
                             }
                         }
                     }
                 }
+                .padding(.horizontal, 8)
+
+                // 教室后部：窗户标注
+                HStack {
+                    Label("窗户", systemImage: "window.ceiling")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("后  门")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+
+                // 图例
+                HStack(spacing: 16) {
+                    HStack(spacing: 4) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(AppTheme.Colors.accent.opacity(0.15))
+                            .frame(width: 14, height: 14)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(AppTheme.Colors.accent.opacity(0.4), lineWidth: 1))
+                        Text("男生")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    HStack(spacing: 4) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.pink.opacity(0.12))
+                            .frame(width: 14, height: 14)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.pink.opacity(0.5), lineWidth: 1))
+                        Text("女生")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    HStack(spacing: 4) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.gray.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                            .frame(width: 14, height: 14)
+                        Text("空座")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.top, 16)
             }
             .padding()
         }
@@ -70,6 +160,8 @@ struct SeatView: View {
         }
     }
 
+    private enum SeatGroup { case left, right }
+
     // 获取指定座位的学生
     private func studentAt(row: Int, col: Int) -> Student? {
         viewModel.students.first { $0.seatRow == row && $0.seatCol == col }
@@ -77,32 +169,31 @@ struct SeatView: View {
 
     // 座位格子
     @ViewBuilder
-    private func seatCell(row: Int, col: Int) -> some View {
+    private func seatCell(row: Int, col: Int, group: SeatGroup) -> some View {
         let student = studentAt(row: row, col: col)
         let isDragging = draggedStudent?.id == student?.id
 
         Group {
             if let student = student {
-                VStack(spacing: 2) {
+                VStack(spacing: 1) {
                     Text(student.name)
                         .font(.caption.weight(.semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
-                    Text("#\(student.studentNumber)")
-                        .font(.system(size: 8))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
+                    Text("\(row)排\(col)座")
+                        .font(.system(size: 7))
+                        .foregroundColor(.secondary.opacity(0.7))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 54)
+                .frame(height: 52)
                 .background(student.gender == .female ? Color.pink.opacity(0.12) : AppTheme.Colors.accent.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .stroke(student.gender == .female ? Color.pink.opacity(0.5) : AppTheme.Colors.accent.opacity(0.4), lineWidth: 1)
                 )
-                .scaleEffect(isDragging ? 1.1 : 1.0)
-                .shadow(color: isDragging ? .black.opacity(0.2) : .clear, radius: isDragging ? 8 : 0)
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .scaleEffect(isDragging ? 1.15 : 1.0)
+                .shadow(color: isDragging ? .black.opacity(0.25) : .clear, radius: isDragging ? 10 : 0)
                 .onDrag {
                     draggedStudent = student
                     return NSItemProvider(object: student.id.uuidString as NSString)
@@ -114,37 +205,53 @@ struct SeatView: View {
                     draggedStudent: $draggedStudent
                 ))
             } else {
-                Rectangle()
-                    .fill(AppTheme.Colors.cardBackground)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(Color.gray.opacity(0.2), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                    )
-                    .onDrop(of: [UTType.text], delegate: SeatDropDelegate(
-                        targetRow: row,
-                        targetCol: col,
-                        viewModel: viewModel,
-                        draggedStudent: $draggedStudent
-                    ))
+                // 空座位
+                VStack(spacing: 1) {
+                    Image(systemName: "person")
+                        .font(.system(size: 10))
+                        .foregroundColor(.gray.opacity(0.3))
+                    Text("\(row)排\(col)座")
+                        .font(.system(size: 7))
+                        .foregroundColor(.gray.opacity(0.4))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(Color.gray.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(Color.gray.opacity(0.15), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                )
+                .onDrop(of: [UTType.text], delegate: SeatDropDelegate(
+                    targetRow: row,
+                    targetCol: col,
+                    viewModel: viewModel,
+                    draggedStudent: $draggedStudent
+                ))
             }
         }
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 2)
     }
 
-    // 自动排座：按学生顺序填满所有座位
+    // 自动排座：按学生顺序填满所有座位（S型排列更真实）
     private func autoAssign() {
         let sorted = viewModel.students.sorted { s1, s2 in
-            // 先按座位号排，没座位的排后面
             if s1.seatRow != s2.seatRow { return s1.seatRow < s2.seatRow }
             if s1.seatCol != s2.seatCol { return s1.seatCol < s2.seatCol }
             return s1.name < s2.name
         }
         var index = 0
         for row in 1...rows {
-            for col in 1...cols {
+            // 左组 1-4
+            for col in 1...colsPerGroup {
+                guard index < sorted.count else { return }
+                if let i = viewModel.students.firstIndex(where: { $0.id == sorted[index].id }) {
+                    viewModel.students[i].seatRow = row
+                    viewModel.students[i].seatCol = col
+                }
+                index += 1
+            }
+            // 右组 5-8
+            for col in (colsPerGroup + 1)...(colsPerGroup * 2) {
                 guard index < sorted.count else { return }
                 if let i = viewModel.students.firstIndex(where: { $0.id == sorted[index].id }) {
                     viewModel.students[i].seatRow = row
