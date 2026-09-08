@@ -8,6 +8,15 @@ struct StudentListView: View {
     @State private var searchText = ""
     @State private var showingAdd = false
     @State private var seatFilter: Int? = nil  // nil = 全部，0 = 未排座，1... = 第N排
+    @State private var sortOption: SortOption = .bySeat
+    @State private var showingSortMenu = false
+
+    enum SortOption: String, CaseIterable {
+        case bySeat = "按座位"
+        case byName = "按姓名"
+        case byNumber = "按学号"
+        case byGroup = "按小组"
+    }
 
     // 最大排数（用于筛选标签）
     private var maxSeatRow: Int {
@@ -24,6 +33,30 @@ struct StudentListView: View {
                 result = result.filter { $0.seatRow == 0 }
             } else {
                 result = result.filter { $0.seatRow == seatFilter }
+            }
+        }
+
+        // 排序
+        switch sortOption {
+        case .bySeat:
+            result.sort { s1, s2 in
+                if s1.seatRow != s2.seatRow { return s1.seatRow < s2.seatRow }
+                if s1.seatCol != s2.seatCol { return s1.seatCol < s2.seatCol }
+                return s1.name.localizedStandardCompare(s2.name) == .orderedAscending
+            }
+        case .byName:
+            result.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        case .byNumber:
+            result.sort { s1, s2 in
+                if s1.studentNumber.isEmpty != s2.studentNumber.isEmpty {
+                    return !s1.studentNumber.isEmpty
+                }
+                return s1.studentNumber.localizedStandardCompare(s2.studentNumber) == .orderedAscending
+            }
+        case .byGroup:
+            result.sort { s1, s2 in
+                if s1.groupNumber != s2.groupNumber { return s1.groupNumber < s2.groupNumber }
+                return s1.name.localizedStandardCompare(s2.name) == .orderedAscending
             }
         }
 
@@ -99,6 +132,21 @@ struct StudentListView: View {
         .searchable(text: $searchText, prompt: "搜索姓名/学号/电话")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                Menu {
+                    ForEach(SortOption.allCases, id: \.self) { option in
+                        Button {
+                            sortOption = option
+                        } label: {
+                            if sortOption == option {
+                                Label(option.rawValue, systemImage: "checkmark")
+                            } else {
+                                Text(option.rawValue)
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                }
                 Button {
                     printRoster()
                 } label: {
