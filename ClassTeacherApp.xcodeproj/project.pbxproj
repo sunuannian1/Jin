@@ -62,6 +62,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F55DEB91836407498DD10C33 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +72,7 @@
 		1A0000000000000000000002 = {
 			isa = PBXGroup;
 			children = (
+				8EC5D345B13DF6A104148FDF /* Assets.xcassets */,
 				A10000000000000000000001 /* ClassTeacherApp.swift */,
 				A10000000000000000000002 /* Theme.swift */,
 				1A0000000000000000000011 /* Views */,
