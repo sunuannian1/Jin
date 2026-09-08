@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F60718293A4B5C /* TodoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5C4B3A291807F6E5D4C3B2A /* TodoListView.swift */; };
 		B10000000000000000000001 /* ClassTeacherApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* ClassTeacherApp.swift */; };
 		B10000000000000000000002 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* Theme.swift */; };
 		B10000000000000000000003 /* Student.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* Student.swift */; };
@@ -207,6 +208,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			A1B2C3D4E5F60718293A4B5C /* TodoListView.swift in Sources */,
 				B10000000000000000000001 /* ClassTeacherApp.swift in Sources */,
 				B10000000000000000000002 /* Theme.swift in Sources */,
 				B10000000000000000000003 /* Student.swift in Sources */,

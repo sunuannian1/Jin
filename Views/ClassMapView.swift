@@ -324,7 +324,7 @@ struct ClassMapView: View {
         let placemark = MKPlacemark(coordinate: coordinate)
         let mapItem = MKMapItem(placemark: placemark)
         mapItem.name = student.name + "的家"
-        mapItem.openMaps(with: [mapItem], launchOptions: [
+        MKMapItem.openMaps(with: [mapItem], launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
         ])
     }
