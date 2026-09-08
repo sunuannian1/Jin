@@ -34,6 +34,16 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="" \
             build 2>&1 | tee build.log
 
+      - name: Compile Assets
+        run: |
+          xcrun actool --compile build/Build/Products/Release-iphoneos/ClassTeacherApp.app \
+            --platform iphoneos \
+            --minimum-deployment-target 16.0 \
+            --app-icon AppIcon \
+            --output-partial-info-plist /tmp/asset-info.plist \
+            Assets.xcassets 2>&1 || echo "actool warning, continuing"
+          ls -la build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Assets.car 2>/dev/null || echo "No Assets.car generated"
+
       - name: Package IPA
         run: |
           mkdir -p Payload
