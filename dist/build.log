@@ -1,0 +1,366 @@
+Command line invocation:
+    /Applications/Xcode_26.6.app/Contents/Developer/usr/bin/xcodebuild -project ClassTeacherApp.xcodeproj -scheme ClassTeacherApp -configuration Release -destination generic/platform=iOS -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= build
+
+Build settings from command line:
+    CODE_SIGN_IDENTITY = 
+    CODE_SIGNING_ALLOWED = NO
+    CODE_SIGNING_REQUIRED = NO
+    DEVELOPMENT_TEAM = 
+    PROVISIONING_PROFILE_SPECIFIER = 
+
+note: Using codesigning identity override: 
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'ClassTeacherApp' in project 'ClassTeacherApp' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: ebb85a5cf9c3161891d67136be39a8bb
+Build description path: /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/XCBuildData/ebb85a5cf9c3161891d67136be39a8bb.xcbuilddata
+ClangStatCache /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk /Users/runner/work/Jin/Jin/build/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache
+    cd /Users/runner/work/Jin/Jin/ClassTeacherApp.xcodeproj
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -o /Users/runner/work/Jin/Jin/build/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache
+
+CreateBuildDirectory /Users/runner/work/Jin/Jin/build/Build/Products
+    cd /Users/runner/work/Jin/Jin/ClassTeacherApp.xcodeproj
+    builtin-create-build-directory /Users/runner/work/Jin/Jin/build/Build/Products
+
+CreateBuildDirectory /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex
+    cd /Users/runner/work/Jin/Jin/ClassTeacherApp.xcodeproj
+    builtin-create-build-directory /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex
+
+CreateBuildDirectory /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos
+    cd /Users/runner/work/Jin/Jin/ClassTeacherApp.xcodeproj
+    builtin-create-build-directory /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp-4a3338b08c1af7d968408dfd79696b77-VFS-iphoneos/all-product-headers.yaml
+    cd /Users/runner/work/Jin/Jin/ClassTeacherApp.xcodeproj
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp-4a3338b08c1af7d968408dfd79696b77-VFS-iphoneos/all-product-headers.yaml
+
+CreateBuildDirectory /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/runner/work/Jin/Jin/ClassTeacherApp.xcodeproj
+    builtin-create-build-directory /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/runner/work/Jin/Jin/ClassTeacherApp.xcodeproj
+    builtin-create-build-directory /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
+    cd /Users/runner/work/Jin/Jin/ClassTeacherApp.xcodeproj
+    builtin-create-build-directory /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/empty-ClassTeacherApp.plist (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/empty-ClassTeacherApp.plist
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp_const_extract_protocols.json (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.SwiftFileList (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.SwiftFileList
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.SwiftConstValuesFileList (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.LinkFileList (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.LinkFileList
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-OutputFileMap.json (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp.hmap (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp.hmap
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp.DependencyStaticMetadataFileList (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp.DependencyMetadataFileList (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-project-headers.hmap (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-project-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-own-target-headers.hmap (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-generated-files.hmap (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-generated-files.hmap
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-all-target-headers.hmap (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-all-non-framework-target-headers.hmap (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    write-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-all-non-framework-target-headers.hmap
+
+MkDir /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    /bin/mkdir -p /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app
+
+ProcessInfoPlistFile /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Info.plist /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/empty-ClassTeacherApp.plist (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-infoPlistUtility /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/empty-ClassTeacherApp.plist -producttype com.apple.product-type.application -genpkginfo /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/PkgInfo -expandbuildsettings -format binary -platform iphoneos -requiredArchitecture arm64 -o /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Info.plist
+
+SwiftDriver ClassTeacherApp normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-SwiftDriver -- /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ClassTeacherApp -O -whole-module-optimization @/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/runner/work/Jin/Jin/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -swift-version 5 -I /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos -F /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos -emit-localized-strings -emit-localized-strings-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64 -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/Jin/Jin/build/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache -output-file-map /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/work/Jin/Jin/build/ModuleCache.noindex -sdk-module-cache-path /Users/runner/work/Jin/Jin/build/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-generated-files.hmap -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-own-target-headers.hmap -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-project-headers.hmap -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/include -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources -emit-objc-header -emit-objc-header-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-Swift.h -working-directory /Users/runner/work/Jin/Jin -no-emit-module-separately-wmo
+
+SwiftDriver\ Compilation ClassTeacherApp normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-Swift-Compilation -- /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ClassTeacherApp -O -whole-module-optimization @/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/runner/work/Jin/Jin/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -swift-version 5 -I /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos -F /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos -emit-localized-strings -emit-localized-strings-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64 -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/Jin/Jin/build/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache -output-file-map /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/work/Jin/Jin/build/ModuleCache.noindex -sdk-module-cache-path /Users/runner/work/Jin/Jin/build/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-generated-files.hmap -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-own-target-headers.hmap -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-project-headers.hmap -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/include -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources -emit-objc-header -emit-objc-header-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-Swift.h -working-directory /Users/runner/work/Jin/Jin -no-emit-module-separately-wmo
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_float-792G1FX8RLHJ9C8MJYW3IY80R.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ptrcheck-C8NKAZC7AJ75ABTFID2D09E3V.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stdarg-EA5O8N7EG6Z327GVPTWOW7Q51.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_AvailabilityInternal-B1ALSYFLH26688TJ5TT8N9RG5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ptrauth-2RPLTBZ9QZHZQ9477IWXQG2WR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/SwiftShims-CBZA90D55DAIU32YSE21K4OVE.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stddef-F4KV097214EH5REUWD9N0GPWP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/DeveloperToolsSupport-2IYC2EB5OTC3MUY04B96D1D6C.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_DarwinFoundation1-A08BRMRI649AR49H1609896QL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_SwiftConcurrencyShims-DPPZF24N49L3ZYNGI9N9KYIOA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stdbool-CAPXII1EK9YMGG1XAOACB5ZE6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_limits-9XHLU9AKE93QM35T97YL0L61H.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ExtensionFoundation-23ZJWQD6VC1HQOSFF8TPW4HCU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_DarwinFoundation2-5WINF5PKOOMD9WWTYX74WJNRR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/sys_types-AUZVZ8R6MQBZS9Q61Q4NUHKBM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stdint-CWABS5YZXN9M2GUSR39HXWON1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_tgmath-76IEEJ84H0H9MBQ7RU7SW53KS.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_DarwinFoundation3-6EEVGAQF83O865WFGAS9MBI43.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_intrinsics-8XKO8TNCSPATDF60RVJDOTR1L.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stdatomic-6LHT1X6UTAH45EQ5QE0PPQKIY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_inttypes-4VNEFQBS9XQZGC3F2CIG6Z9SX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Darwin-4R0EAZRJZ1D4Q116JO61EF0CB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/simd-90LDIP3OIEDKA59GP99Z8JWCO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/MachO-EAV1C27BAFW3BXURSIZQIJPIE.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ObjectiveC-A8TVKXDF14ZLIJBA5OFVITDW6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/os_object-31PIHBQB1Z53SPXX76YHJW5EA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/os_workgroup-8JIKP2Y2UNYQCWDMXSWAHNXUG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Dispatch-385P2O0CFEVNDYBJJ2MXCMWGY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Spatial-A6P6V98EZFFXT28S52OLWTIQ4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/dnssd-31DZQRRQHJ4UPP2KMG80QA822.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreFoundation-95047AFGULB94DMLCNQNEQ4QC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/XPC-2KHG6QV6SH7XKR83F2GLSS102.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CFNetwork-4V5DGEOG2TF497LAIA4HAED0B.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Security-AA4SGDG10HHVKOLPTSTXT3EE3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreGraphics-9K4GQQ7G2F3SUPUEEBMFSD2L0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreAudioTypes-EJPRTQDBYHYGBIVGQNSG18870.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/os-3ZLD3OGKL8FII0IOT1LSUV3EM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreAudio-8VBEBU71WBHOT41AQ54S68F80.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Foundation-CPP7KXWSRRQ1FSLYRVS5RIQB2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreText-D1S57GUT882T0I01YKIJXJHTB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ImageIO-BTWD25B5T41LMGZ32Q7XBLTZO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/IOSurface-4QMHE6LHP1SY6295IH8P7SAGK.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreMIDI-8RXSNZ1WGVDX07UKL37SRYD21.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_LocationEssentials-3G1HWTXKD5WI860C82DMZ0CGN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Symbols-3N7F1ASBT6ZO1JFUOZ104JFZR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Metal-6TOHYCSPPWVUCG0RMEGRQ2BH1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/OSLog-CU6Z843V7EG9KNW88H62IPTSG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreLocation-2UB3S4WY923YWX92UBP95AX21.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/OpenGLES-1DYYAGVTTGF9EZB6MYFQUN7G7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/UIUtilities-9G3QSA2V4YY8IMW6N4WDVV6S9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/AudioToolbox-19TIYKNGCC4D3497GN5EA5P.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Network-3CSSD0R5RN3E2REL09G11HW5O.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreData-6TY30J00EJS08VCTVRWI5W8LB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreVideo-DX6GJ1THJ5G4BRRC4J1O2LS9U.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/AVRouting-CTHCAPWJO4D52DLGIFLSCXI2V.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Accessibility-1DBU5TIRTW38XI03R463YJS9A.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/UniformTypeIdentifiers-5ZOD65B1OPW6C1XIZ4SZ197L4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/FileProvider-3UMVYA7PSK06XHWEAS3PDO2CO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreMedia-18HGH07KJAJ0BGHUG5M21X8BT.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreImage-CZYEAX0OEBND3YFK3PU4HZ1Q1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/QuartzCore-CD9XH0QBRMGMKBK5E4G66C9QB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreTransferable-BDK271EFATMC7X0Z7JJJRPHTG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/MediaToolbox-BXLRCGPCPLDUH4MISLT2EXCSB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/AVFAudio-5Y8M9LSQFX02GDP5NWBJV7ONN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/SwiftUICore-EOLO8JM4US5GBV87PALMRSWKJ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/DataDetection-9FHP0HPBASAUFJH9MXDQPKC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/UserNotifications-2HUIV4O4RM3HYFMYI4PCNYDLC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/AVFoundation-AZQ5ZX0VSHLJWJOVE5U9OP1Z4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/UIKit-45QAAHDCZS2ECE65KN99ENLTJ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Photos-2OCGC6PR0BMC6VR4AG4NPVFWT.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/MapKit-2AEUUWMCC8APBEA5G0BY4D11.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/PhotosUI-E3N54T3S1B5X1EFY3MRHZCQOY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/SwiftUI-BQTZ0NC0UW416H6E45XVH50QY.pcm
+
+SwiftCompile normal arm64 Compiling\ ClassTeacherApp.swift,\ Theme.swift,\ Student.swift,\ DataManager.swift,\ AppViewModel.swift,\ DutyView.swift,\ ExamListView.swift,\ HomeView.swift,\ RankingAndProfileView.swift,\ ScheduleView.swift,\ ScoreDetailView.swift,\ SeatView.swift,\ SettingsView.swift,\ StudentListView.swift,\ ExtraModels.swift,\ NotificationView.swift,\ AlbumView.swift,\ ClassMapView.swift,\ RankingListView.swift,\ PrintService.swift,\ HomeFeatureManagerView.swift /Users/runner/work/Jin/Jin/ClassTeacherApp.swift /Users/runner/work/Jin/Jin/Theme.swift /Users/runner/work/Jin/Jin/Models/Student.swift /Users/runner/work/Jin/Jin/Utils/DataManager.swift /Users/runner/work/Jin/Jin/ViewModels/AppViewModel.swift /Users/runner/work/Jin/Jin/Views/DutyView.swift /Users/runner/work/Jin/Jin/Views/ExamListView.swift /Users/runner/work/Jin/Jin/Views/HomeView.swift /Users/runner/work/Jin/Jin/Views/RankingAndProfileView.swift /Users/runner/work/Jin/Jin/Views/ScheduleView.swift /Users/runner/work/Jin/Jin/Views/ScoreDetailView.swift /Users/runner/work/Jin/Jin/Views/SeatView.swift /Users/runner/work/Jin/Jin/Views/SettingsView.swift /Users/runner/work/Jin/Jin/Views/StudentListView.swift /Users/runner/work/Jin/Jin/Models/ExtraModels.swift /Users/runner/work/Jin/Jin/Views/NotificationView.swift /Users/runner/work/Jin/Jin/Views/AlbumView.swift /Users/runner/work/Jin/Jin/Views/ClassMapView.swift /Users/runner/work/Jin/Jin/Views/RankingListView.swift /Users/runner/work/Jin/Jin/Utils/PrintService.swift /Users/runner/work/Jin/Jin/Views/HomeFeatureManagerView.swift /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/XPC.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreData.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Photos.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreLocation.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Foundation.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Observation.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/MapKit.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Network.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Combine.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/QuartzCore.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/_DarwinFoundation1.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/DataDetection.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreText.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/System.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/_Builtin_float.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Charts.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreVideo.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/AVFAudio.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/PhotosUI.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreFoundation.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Synchronization.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/simd.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreMIDI.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Metal.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/_DarwinFoundation3.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/SwiftUI.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/SwiftUICore.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreMedia.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Distributed.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Spatial.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Accessibility.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/LightweightCodeRequirements.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/DeveloperToolsSupport.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/ObjectiveC.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/ExtensionFoundation.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/UIKit.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/os.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/AudioToolbox.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Swift.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/GeoToolbox.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Darwin.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/FileProvider.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/OSLog.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/UniformTypeIdentifiers.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/_Concurrency.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/_PhotosUI_SwiftUI.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/_StringProcessing.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/_DarwinFoundation2.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Symbols.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreTransferable.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreImage.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/_MapKit_SwiftUI.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/AVFoundation.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreGraphics.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/Dispatch.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/26.5/CoreAudio.swiftmodule/arm64e-apple-ios.swiftmodule /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/PhotosUI-E3N54T3S1B5X1EFY3MRHZCQOY.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Accessibility-1DBU5TIRTW38XI03R463YJS9A.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/UIUtilities-9G3QSA2V4YY8IMW6N4WDVV6S9.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ObjectiveC-A8TVKXDF14ZLIJBA5OFVITDW6.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stddef-F4KV097214EH5REUWD9N0GPWP.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreFoundation-95047AFGULB94DMLCNQNEQ4QC.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Photos-2OCGC6PR0BMC6VR4AG4NPVFWT.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ExtensionFoundation-23ZJWQD6VC1HQOSFF8TPW4HCU.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/AudioToolbox-19TIYKNGCC4D3497GN5EA5P.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreMIDI-8RXSNZ1WGVDX07UKL37SRYD21.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Symbols-3N7F1ASBT6ZO1JFUOZ104JFZR.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/QuartzCore-CD9XH0QBRMGMKBK5E4G66C9QB.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/sys_types-AUZVZ8R6MQBZS9Q61Q4NUHKBM.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_SwiftConcurrencyShims-DPPZF24N49L3ZYNGI9N9KYIOA.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/AVFAudio-5Y8M9LSQFX02GDP5NWBJV7ONN.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_LocationEssentials-3G1HWTXKD5WI860C82DMZ0CGN.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/os_object-31PIHBQB1Z53SPXX76YHJW5EA.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_intrinsics-8XKO8TNCSPATDF60RVJDOTR1L.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreData-6TY30J00EJS08VCTVRWI5W8LB.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreText-D1S57GUT882T0I01YKIJXJHTB.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ImageIO-BTWD25B5T41LMGZ32Q7XBLTZO.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreLocation-2UB3S4WY923YWX92UBP95AX21.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stdatomic-6LHT1X6UTAH45EQ5QE0PPQKIY.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreAudio-8VBEBU71WBHOT41AQ54S68F80.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/os-3ZLD3OGKL8FII0IOT1LSUV3EM.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/IOSurface-4QMHE6LHP1SY6295IH8P7SAGK.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/SwiftUI-BQTZ0NC0UW416H6E45XVH50QY.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Darwin-4R0EAZRJZ1D4Q116JO61EF0CB.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_float-792G1FX8RLHJ9C8MJYW3IY80R.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Dispatch-385P2O0CFEVNDYBJJ2MXCMWGY.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_DarwinFoundation3-6EEVGAQF83O865WFGAS9MBI43.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Network-3CSSD0R5RN3E2REL09G11HW5O.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/DeveloperToolsSupport-2IYC2EB5OTC3MUY04B96D1D6C.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/UserNotifications-2HUIV4O4RM3HYFMYI4PCNYDLC.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/simd-90LDIP3OIEDKA59GP99Z8JWCO.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/SwiftShims-CBZA90D55DAIU32YSE21K4OVE.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CFNetwork-4V5DGEOG2TF497LAIA4HAED0B.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/AVFoundation-AZQ5ZX0VSHLJWJOVE5U9OP1Z4.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/DataDetection-9FHP0HPBASAUFJH9MXDQPKC.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/OSLog-CU6Z843V7EG9KNW88H62IPTSG.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Security-AA4SGDG10HHVKOLPTSTXT3EE3.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_limits-9XHLU9AKE93QM35T97YL0L61H.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/AVRouting-CTHCAPWJO4D52DLGIFLSCXI2V.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/os_workgroup-8JIKP2Y2UNYQCWDMXSWAHNXUG.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stdbool-CAPXII1EK9YMGG1XAOACB5ZE6.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/XPC-2KHG6QV6SH7XKR83F2GLSS102.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stdarg-EA5O8N7EG6Z327GVPTWOW7Q51.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/UniformTypeIdentifiers-5ZOD65B1OPW6C1XIZ4SZ197L4.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ptrcheck-C8NKAZC7AJ75ABTFID2D09E3V.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreMedia-18HGH07KJAJ0BGHUG5M21X8BT.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/MediaToolbox-BXLRCGPCPLDUH4MISLT2EXCSB.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreGraphics-9K4GQQ7G2F3SUPUEEBMFSD2L0.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/ptrauth-2RPLTBZ9QZHZQ9477IWXQG2WR.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_tgmath-76IEEJ84H0H9MBQ7RU7SW53KS.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/UIKit-45QAAHDCZS2ECE65KN99ENLTJ.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreTransferable-BDK271EFATMC7X0Z7JJJRPHTG.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_DarwinFoundation2-5WINF5PKOOMD9WWTYX74WJNRR.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Metal-6TOHYCSPPWVUCG0RMEGRQ2BH1.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Foundation-CPP7KXWSRRQ1FSLYRVS5RIQB2.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreImage-CZYEAX0OEBND3YFK3PU4HZ1Q1.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreAudioTypes-EJPRTQDBYHYGBIVGQNSG18870.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/FileProvider-3UMVYA7PSK06XHWEAS3PDO2CO.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/CoreVideo-DX6GJ1THJ5G4BRRC4J1O2LS9U.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_AvailabilityInternal-B1ALSYFLH26688TJ5TT8N9RG5.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/MapKit-2AEUUWMCC8APBEA5G0BY4D11.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Spatial-A6P6V98EZFFXT28S52OLWTIQ4.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/dnssd-31DZQRRQHJ4UPP2KMG80QA822.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/OpenGLES-1DYYAGVTTGF9EZB6MYFQUN7G7.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_inttypes-4VNEFQBS9XQZGC3F2CIG6Z9SX.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/MachO-EAV1C27BAFW3BXURSIZQIJPIE.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/SwiftUICore-EOLO8JM4US5GBV87PALMRSWKJ.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_DarwinFoundation1-A08BRMRI649AR49H1609896QL.pcm /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/_Builtin_stdint-CWABS5YZXN9M2GUSR39HXWON1.pcm /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-dependencies-1.json (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+
+CompileSwift normal arm64 (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    
+/Users/runner/work/Jin/Jin/ViewModels/AppViewModel.swift:155:27: warning: variable 'self' was written to, but never read
+            .sink { [weak self] in UserDefaults.standard.set($0?.uuidString, forKey: "currentSemesterId") }.store(in: &cancellables)
+                          ^
+/Users/runner/work/Jin/Jin/Views/AlbumView.swift:197:49: warning: result of call to 'run(resultType:body:)' is unused
+                                await MainActor.run {
+                                                ^   ~
+
+SwiftDriverJobDiscovery normal arm64 Compiling ClassTeacherApp.swift, Theme.swift, Student.swift, DataManager.swift, AppViewModel.swift, DutyView.swift, ExamListView.swift, HomeView.swift, RankingAndProfileView.swift, ScheduleView.swift, ScoreDetailView.swift, SeatView.swift, SettingsView.swift, StudentListView.swift, ExtraModels.swift, NotificationView.swift, AlbumView.swift, ClassMapView.swift, RankingListView.swift, PrintService.swift, HomeFeatureManagerView.swift (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+
+SwiftDriver\ Compilation\ Requirements ClassTeacherApp normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ClassTeacherApp -O -whole-module-optimization @/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/runner/work/Jin/Jin/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -swift-version 5 -I /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos -F /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos -emit-localized-strings -emit-localized-strings-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64 -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/Jin/Jin/build/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache -output-file-map /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/work/Jin/Jin/build/ModuleCache.noindex -sdk-module-cache-path /Users/runner/work/Jin/Jin/build/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/Jin/Jin/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-generated-files.hmap -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-own-target-headers.hmap -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp-project-headers.hmap -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/include -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources -emit-objc-header -emit-objc-header-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-Swift.h -working-directory /Users/runner/work/Jin/Jin -no-emit-module-separately-wmo
+
+SwiftMergeGeneratedHeaders /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources/ClassTeacherApp-Swift.h /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-Swift.h (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-swiftHeaderTool -arch arm64 /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-Swift.h -o /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/DerivedSources/ClassTeacherApp-Swift.h
+
+Copy /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.swiftmodule/arm64-apple-ios.swiftmodule /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftmodule (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftmodule /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.swiftmodule/arm64-apple-ios.swiftmodule
+
+Copy /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.swiftmodule/arm64-apple-ios.swiftdoc /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftdoc (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftdoc /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.swiftmodule/arm64-apple-ios.swiftdoc
+
+Copy /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.swiftmodule/arm64-apple-ios.abi.json /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.abi.json (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.abi.json /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.swiftmodule/arm64-apple-ios.abi.json
+
+Copy /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftsourceinfo (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftsourceinfo /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo
+
+Ld /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/ClassTeacherApp normal (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0 -isysroot /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -Os -L/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos -L/Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos -F/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos -F/Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos -filelist /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.LinkFileList -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker @executable_path/Frameworks -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp_lto.o -Xlinker -dependency_info -Xlinker /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.swiftmodule @/Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp-linker-args.resp -o /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/ClassTeacherApp
+
+CopySwiftLibs /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/ClassTeacherApp --scan-folder /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Frameworks --scan-folder /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/PlugIns --scan-folder /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/SystemExtensions --scan-folder /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Extensions --platform iphoneos --toolchain /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.6.109.0.a1bVT6/Metal.xctoolchain --toolchain /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+Ignoring --strip-bitcode because --sign was not passed
+
+GenerateDSYMFile /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app.dSYM /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/ClassTeacherApp (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/ClassTeacherApp -o /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app.dSYM
+
+ExtractAppIntentsMetadata (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.6.109.0.a1bVT6/Metal.xctoolchain --module-name ClassTeacherApp --sdk-root /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk --xcode-version 17F113 --platform-family iOS --deployment-target 16.0 --bundle-identifier com.dmjorb.ClassTeacherApp --output /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app --target-triple arm64-apple-ios16.0 --binary-file /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/ClassTeacherApp --dependency-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp_dependency_info.dat --stringsdata-file /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.SwiftFileList --metadata-file-list /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/Objects-normal/arm64/ClassTeacherApp.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-09-07 11:49:14.235 appintentsmetadataprocessor[1975:9321] Starting appintentsmetadataprocessor export
+2026-09-07 11:49:14.244 appintentsmetadataprocessor[1975:9321] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+AppIntentsSSUTraining (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Info.plist --temp-dir-path /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ssu --bundle-id com.dmjorb.ClassTeacherApp --product-path /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app --extracted-metadata-path /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Metadata.appintents --metadata-file-list /Users/runner/work/Jin/Jin/build/Build/Intermediates.noindex/ClassTeacherApp.build/Release-iphoneos/ClassTeacherApp.build/ClassTeacherApp.DependencyMetadataFileList --source-file /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app/Info.plist --archive-ssu-assets
+2026-09-07 11:49:14.289 appintentsnltrainingprocessor[1976:9327] Parsing options for appintentsnltrainingprocessor
+2026-09-07 11:49:14.289 appintentsnltrainingprocessor[1976:9327] Starting AppIntents SSU YAML Generation
+2026-09-07 11:49:14.294 appintentsnltrainingprocessor[1976:9327] No AppShortcuts found - Skipping.
+
+RegisterExecutionPolicyException /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-RegisterExecutionPolicyException /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app
+
+Validate /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    builtin-validationUtility /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app -validate-for-store -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app (in target 'ClassTeacherApp' from project 'ClassTeacherApp')
+    cd /Users/runner/work/Jin/Jin
+    /usr/bin/touch -c /Users/runner/work/Jin/Jin/build/Build/Products/Release-iphoneos/ClassTeacherApp.app
+
+** BUILD SUCCEEDED **
+

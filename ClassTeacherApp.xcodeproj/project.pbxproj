@@ -28,6 +28,7 @@
 		B10000000000000000000025 /* RankingListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000025 /* RankingListView.swift */; };
 		B10000000000000000000026 /* PrintService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* PrintService.swift */; };
 		B10000000000000000000027 /* HomeFeatureManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000027 /* HomeFeatureManagerView.swift */; };
+		F55DEB91836407498DD10C33 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8EC5D345B13DF6A104148FDF /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +53,7 @@
 		A10000000000000000000025 /* RankingListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingListView.swift; sourceTree = "<group>"; };
 		A10000000000000000000026 /* PrintService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintService.swift; sourceTree = "<group>"; };
 		A10000000000000000000027 /* HomeFeatureManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeFeatureManagerView.swift; sourceTree = "<group>"; };
+		8EC5D345B13DF6A104148FDF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A1000000000000000000000F /* ClassTeacherApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClassTeacherApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -360,6 +362,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.dmjorb.ClassTeacherApp;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
