@@ -327,14 +327,44 @@ class AppViewModel: ObservableObject {
     }
 
     // MARK: - 待办
-    func addTodo(title: String) {
-        todos.append(TodoItem(title: title))
+    func addTodo(title: String, dueDate: Date? = nil) {
+        todos.append(TodoItem(title: title, dueDate: dueDate))
     }
     func toggleTodo(_ todo: TodoItem) {
-        if let i = todos.firstIndex(where: { $0.id == todo.id }) { todos[i].isCompleted.toggle() }
+        if let i = todos.firstIndex(where: { $0.id == todo.id }) {
+            todos[i].isCompleted.toggle()
+            if todos[i].isCompleted {
+                todos[i].completedAt = Date()
+            } else {
+                todos[i].completedAt = nil
+            }
+        }
     }
     func deleteTodo(_ todo: TodoItem) { todos.removeAll { $0.id == todo.id } }
     var pendingTodos: [TodoItem] { todos.filter { !$0.isCompleted } }
+
+    // 今日待办（包括已完成的）
+    var todayTodos: [TodoItem] {
+        let calendar = Calendar.current
+        return todos.filter { todo in
+            if let due = todo.dueDate {
+                return calendar.isDateInToday(due)
+            }
+            return calendar.isDateInToday(todo.createdAt)
+        }.sorted { $0.createdAt < $1.createdAt }
+    }
+
+    // 按日期分组的所有待办（用于历史记录）
+    var todosByDate: [(date: Date, items: [TodoItem])] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: todos) { todo -> Date in
+            if let due = todo.dueDate {
+                return calendar.startOfDay(for: due)
+            }
+            return calendar.startOfDay(for: todo.createdAt)
+        }
+        return grouped.sorted { $0.key > $1.key }.map { (date: $0.key, items: $0.value.sorted { $0.createdAt < $1.createdAt }) }
+    }
 
     // 待录成绩数 = 考试数 * 学生数 - 已录入成绩数
     var pendingScoreCount: Int {

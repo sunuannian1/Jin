@@ -358,6 +358,14 @@ struct HomeView: View {
                         .foregroundColor(AppTheme.Colors.primaryText)
                         .tracking(-0.3)
                     Spacer()
+                    NavigationLink {
+                        TodoListView()
+                    } label: {
+                        Text("全部")
+                            .font(AppTheme.Fonts.footnote.weight(.semibold))
+                            .foregroundColor(AppTheme.Colors.accent)
+                    }
+                    .buttonStyle(.plain)
                     Button {
                         showingAddTodo = true
                     } label: {
@@ -368,8 +376,8 @@ struct HomeView: View {
                     .buttonStyle(.plain)
                 }
 
-                let pending = viewModel.pendingTodos
-                if pending.isEmpty {
+                let todayTodos = viewModel.todayTodos
+                if todayTodos.isEmpty {
                     HStack {
                         Spacer()
                         VStack(spacing: 6) {
@@ -385,7 +393,7 @@ struct HomeView: View {
                     .padding(.vertical, 20)
                 } else {
                     VStack(spacing: 0) {
-                        ForEach(Array(pending.enumerated()), id: \.element.id) { index, todo in
+                        ForEach(Array(todayTodos.enumerated()), id: \.element.id) { index, todo in
                             HStack(spacing: 12) {
                                 Button {
                                     withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
@@ -393,16 +401,26 @@ struct HomeView: View {
                                     }
                                 } label: {
                                     ZStack {
-                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                            .stroke(AppTheme.Colors.tertiaryText, lineWidth: 1.5)
-                                            .frame(width: 22, height: 22)
+                                        if todo.isCompleted {
+                                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                                .fill(AppTheme.Colors.accent)
+                                                .frame(width: 22, height: 22)
+                                            Image(systemName: "checkmark")
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(.white)
+                                        } else {
+                                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                                .stroke(AppTheme.Colors.tertiaryText, lineWidth: 1.5)
+                                                .frame(width: 22, height: 22)
+                                        }
                                     }
                                 }
                                 .buttonStyle(.plain)
 
                                 Text(todo.title)
                                     .font(AppTheme.Fonts.body)
-                                    .foregroundColor(AppTheme.Colors.primaryText)
+                                    .foregroundColor(todo.isCompleted ? AppTheme.Colors.tertiaryText : AppTheme.Colors.primaryText)
+                                    .strikethrough(todo.isCompleted, color: AppTheme.Colors.tertiaryText)
                                 Spacer()
                                 Button {
                                     viewModel.deleteTodo(todo)
@@ -415,7 +433,7 @@ struct HomeView: View {
                                 .buttonStyle(.plain)
                             }
                             .padding(.vertical, 10)
-                            if index < pending.count - 1 {
+                            if index < todayTodos.count - 1 {
                                 Divider()
                                     .background(AppTheme.Colors.separator)
                                     .padding(.leading, 34)
