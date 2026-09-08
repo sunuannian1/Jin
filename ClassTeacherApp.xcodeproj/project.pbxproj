@@ -33,6 +33,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D5C4B3A291807F6E5D4C3B2A /* TodoListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoListView.swift; sourceTree = "<group>"; };
 		A10000000000000000000001 /* ClassTeacherApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassTeacherApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000002 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* Student.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Student.swift; sourceTree = "<group>"; };
@@ -109,6 +110,7 @@
 				A10000000000000000000024 /* ClassMapView.swift */,
 				A10000000000000000000025 /* RankingListView.swift */,
 				A10000000000000000000027 /* HomeFeatureManagerView.swift */,
+			D5C4B3A291807F6E5D4C3B2A /* TodoListView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
