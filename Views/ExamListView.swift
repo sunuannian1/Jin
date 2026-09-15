@@ -346,7 +346,6 @@ struct SemesterManagerView: View {
     @EnvironmentObject var viewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showingAdd = false
-    @State private var newSemesterName = ""
 
     var body: some View {
         Group {
@@ -406,14 +405,81 @@ struct SemesterManagerView: View {
                 }
             }
         }
-        .alert("新建学期", isPresented: $showingAdd) {
-            TextField("学期名称（如：2025-2026学年第一学期）", text: .constant(""))
-            Button("取消", role: .cancel) {}
-            Button("创建") {
-                let semester = Semester(name: "新学期", shortName: "新学期")
-                viewModel.addSemester(semester)
+        .sheet(isPresented: $showingAdd) {
+            NavigationStack { SemesterFormView() }
+        }
+    }
+}
+
+// MARK: - 新建学期（名称 + 起止日期，对齐网页新建学期弹窗）
+struct SemesterFormView: View {
+    @EnvironmentObject var viewModel: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var name = ""
+    @State private var startDate: Date
+    @State private var endDate: Date
+
+    init() {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: Date())
+        let fallStart = calendar.date(from: DateComponents(year: year, month: 9, day: 1)) ?? Date()
+        let winterEnd = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 31)) ?? Date()
+        _startDate = State(initialValue: fallStart)
+        _endDate = State(initialValue: winterEnd)
+    }
+
+    private var trimmedName: String { name.trimmingCharacters(in: .whitespaces) }
+
+    var body: some View {
+        Form {
+            Section("学期名称") {
+                TextField("如：2025-2026学年第一学期", text: $name)
+            }
+            Section("学期时间") {
+                DatePicker("开始日期", selection: $startDate, displayedComponents: .date)
+                DatePicker("结束日期", selection: $endDate, displayedComponents: .date)
+            }
+            Section {
+                Button("使用第一学期（9月-1月）") { applyPreset(first: true) }
+                Button("使用第二学期（2月-7月）") { applyPreset(first: false) }
+            } header: {
+                Text("快速填充")
+            } footer: {
+                Text("新建后将自动切换到该学期，成绩数据按学期隔离。")
             }
         }
+        .navigationTitle("新建学期")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("创建") { save() }
+                    .fontWeight(.semibold)
+                    .disabled(trimmedName.isEmpty)
+            }
+        }
+    }
+
+    private func applyPreset(first: Bool) {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: startDate)
+        if first {
+            startDate = calendar.date(from: DateComponents(year: year, month: 9, day: 1)) ?? startDate
+            endDate = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 31)) ?? endDate
+            if name.isEmpty { name = "\(year)-\(year + 1)学年第一学期" }
+        } else {
+            startDate = calendar.date(from: DateComponents(year: year, month: 2, day: 1)) ?? startDate
+            endDate = calendar.date(from: DateComponents(year: year, month: 7, day: 31)) ?? endDate
+            if name.isEmpty { name = "\(year - 1)-\(year)学年第二学期" }
+        }
+    }
+
+    private func save() {
+        let semester = Semester(name: trimmedName, shortName: trimmedName,
+                                startDate: startDate, endDate: endDate, isCurrent: true)
+        viewModel.addSemester(semester)
+        viewModel.setCurrentSemester(semester)
+        dismiss()
     }
 }
 

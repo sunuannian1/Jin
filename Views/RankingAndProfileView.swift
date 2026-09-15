@@ -246,36 +246,47 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - 用户信息卡
+    // MARK: - 用户信息卡（点按进入班级设置）
     private var userCard: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(AppTheme.Colors.accentGradient)
-                    .frame(width: 64, height: 64)
-                Text(String(viewModel.classInfo.headTeacher.isEmpty ? "班" : String(viewModel.classInfo.headTeacher.prefix(1))))
-                    .font(.system(size: 28, weight: .heavy))
-                    .foregroundColor(.white)
-            }
+        NavigationLink {
+            SettingsView()
+        } label: {
+            HStack(spacing: 16) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(AppTheme.Colors.accentGradient)
+                        .frame(width: 64, height: 64)
+                    Text(String(viewModel.classInfo.headTeacher.isEmpty ? "班" : String(viewModel.classInfo.headTeacher.prefix(1))))
+                        .font(.system(size: 28, weight: .heavy))
+                        .foregroundColor(.white)
+                }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(viewModel.classInfo.headTeacher.isEmpty ? "未设置班主任" : viewModel.classInfo.headTeacher)
-                    .font(AppTheme.Fonts.title2)
-                    .foregroundColor(.white)
-                Text(viewModel.classInfo.className.isEmpty ? "未设置班级" : viewModel.classInfo.className)
-                    .font(AppTheme.Fonts.footnote)
-                    .foregroundColor(.white.opacity(0.7))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(viewModel.classInfo.headTeacher.isEmpty ? "未设置班主任" : viewModel.classInfo.headTeacher)
+                        .font(AppTheme.Fonts.title2)
+                        .foregroundColor(.white)
+                    Text(viewModel.classInfo.className.isEmpty ? "未设置班级 · 点此设置" : viewModel.classInfo.className)
+                        .font(AppTheme.Fonts.footnote)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                Spacer()
+                VStack(spacing: 3) {
+                    Image(systemName: "square.and.pencil")
+                        .font(.system(size: 15, weight: .semibold))
+                    Text("编辑").font(.system(size: 9, weight: .medium))
+                }
+                .foregroundColor(.white.opacity(0.85))
             }
-            Spacer()
+            .padding(20)
+            .frame(maxWidth: .infinity)
+            .background(
+                LinearGradient(colors: [AppTheme.Colors.primaryText, Color(red: 0.20, green: 0.18, blue: 0.16)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous))
+            .rdShadow(AppTheme.Shadows.md)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .background(
-            LinearGradient(colors: [AppTheme.Colors.primaryText, Color(red: 0.20, green: 0.18, blue: 0.16)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous))
-        .rdShadow(AppTheme.Shadows.md)
+        .buttonStyle(PressableButtonStyle(scale: 0.98))
     }
 
     // MARK: - 数据统计

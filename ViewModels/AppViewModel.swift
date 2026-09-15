@@ -336,6 +336,48 @@ class AppViewModel: ObservableObject {
             .sorted { $0.total > $1.total }
     }
 
+    // MARK: - 学生个人成绩（学生详情 · 对齐网页成绩趋势/考试记录）
+    // 该学生考过的所有科目，按班级开设科目顺序排列，其余追加在后
+    func subjectsTaken(by studentId: UUID) -> [String] {
+        let taken = Set(scoreRecords.filter { $0.studentId == studentId }.map { $0.subject })
+        let ordered = classInfo.subjects.filter { taken.contains($0) }
+        let extra = taken.sorted().filter { !classInfo.subjects.contains($0) }
+        return ordered + extra
+    }
+
+    // 某学生某科目历次考试成绩（按考试日期升序，用于趋势折线）
+    func studentTrend(studentId: UUID, subject: String) -> [StudentTrendPoint] {
+        exams
+            .filter { $0.subjects.contains(subject) }
+            .sorted { $0.date < $1.date }
+            .compactMap { exam in
+                guard let rec = scoreRecords.first(where: {
+                    $0.studentId == studentId && $0.examId == exam.id && $0.subject == subject
+                }) else { return nil }
+                return StudentTrendPoint(examId: exam.id, examName: exam.name, date: exam.date,
+                                         score: rec.score, fullScore: rec.fullScore)
+            }
+    }
+
+    // 某学生全部考试记录（含各科目分数、总分，按考试日期倒序）
+    func studentExamRecords(studentId: UUID) -> [StudentExamRecord] {
+        exams.compactMap { exam -> StudentExamRecord? in
+            let recs = scoreRecords.filter { $0.studentId == studentId && $0.examId == exam.id }
+            guard !recs.isEmpty else { return nil }
+            let subjectScores: [(subject: String, score: Double, full: Double)] = exam.subjects.compactMap { subj in
+                guard let r = recs.first(where: { $0.subject == subj }) else { return nil }
+                return (subj, r.score, r.fullScore)
+            }
+            return StudentExamRecord(
+                exam: exam,
+                total: recs.reduce(0) { $0 + $1.score },
+                fullTotal: recs.reduce(0) { $0 + $1.fullScore },
+                subjectScores: subjectScores
+            )
+        }
+        .sorted { $0.exam.date > $1.exam.date }
+    }
+
     // MARK: - 课程
     func courses(for dayOfWeek: Int) -> [Course] {
         courses.filter { $0.dayOfWeek == dayOfWeek }.sorted { $0.period < $1.period }
@@ -459,10 +501,20 @@ class AppViewModel: ObservableObject {
 
     // MARK: - 相册
     @discardableResult
-    func addAlbum(name: String, category: String) -> AlbumFolder {
-        let folder = AlbumFolder(name: name, category: category)
+    func addAlbum(name: String, category: String = "班级活动", desc: String? = nil, isPinned: Bool = false) -> AlbumFolder {
+        let folder = AlbumFolder(name: name, category: category, desc: desc, isPinned: isPinned)
         albumFolders.append(folder)
         return folder
+    }
+    func updateAlbum(_ folder: AlbumFolder) {
+        if let i = albumFolders.firstIndex(where: { $0.id == folder.id }) { albumFolders[i] = folder }
+    }
+    func toggleAlbumPin(_ folder: AlbumFolder) {
+        if let i = albumFolders.firstIndex(where: { $0.id == folder.id }) { albumFolders[i].isPinned.toggle() }
+    }
+    // 设置相册封面（nil 表示回退到第一张）
+    func setAlbumCover(folderId: UUID, photoId: UUID?) {
+        if let i = albumFolders.firstIndex(where: { $0.id == folderId }) { albumFolders[i].coverPhotoId = photoId }
     }
     func deleteAlbum(_ folder: AlbumFolder) {
         for photoId in folder.photoIds {
@@ -495,6 +547,41 @@ class AppViewModel: ObservableObject {
     func photoData(id: UUID) -> Data? { dataManager.loadPhotoData(id: id) }
     func photos(in folder: AlbumFolder) -> [AlbumPhoto] {
         folder.photoIds.compactMap { id in albumPhotos.first { $0.id == id } }
+    }
+    // 相册实际封面：优先指定封面，否则取第一张
+    func coverPhotoId(of folder: AlbumFolder) -> UUID? {
+        if let cover = folder.coverPhotoId, folder.photoIds.contains(cover) { return cover }
+        return folder.photoIds.first
+    }
+    // 相册内照片按「天」分组（日期倒序，组内时间倒序）
+    func photosByDate(in folder: AlbumFolder) -> [(date: Date, photos: [AlbumPhoto])] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: photos(in: folder)) { calendar.startOfDay(for: $0.date) }
+        return grouped
+            .sorted { $0.key > $1.key }
+            .map { (date: $0.key, photos: $0.value.sorted { $0.date > $1.date }) }
+    }
+    // 移动单张照片到另一相册
+    func movePhoto(_ photoId: UUID, to targetId: UUID) {
+        guard let photoIndex = albumPhotos.firstIndex(where: { $0.id == photoId }),
+              albumFolders.contains(where: { $0.id == targetId }) else { return }
+        let sourceId = albumPhotos[photoIndex].folderId
+        guard sourceId != targetId else { return }
+        albumPhotos[photoIndex].folderId = targetId
+        if let s = albumFolders.firstIndex(where: { $0.id == sourceId }) {
+            albumFolders[s].photoIds.removeAll { $0 == photoId }
+        }
+        if let t = albumFolders.firstIndex(where: { $0.id == targetId }) {
+            albumFolders[t].photoIds.append(photoId)
+        }
+    }
+    // 批量移动
+    func movePhotos(_ ids: [UUID], to targetId: UUID) {
+        for id in ids { movePhoto(id, to: targetId) }
+    }
+    // 批量删除
+    func deletePhotos(_ photos: [AlbumPhoto]) {
+        for photo in photos { deletePhoto(photo) }
     }
 
     // MARK: - 备份与恢复
@@ -691,4 +778,26 @@ class AppViewModel: ObservableObject {
         let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "EEEE"
         return f.string(from: Date())
     }
+}
+
+// MARK: - 学生个人成绩数据结构（学生详情趋势/记录用）
+struct StudentTrendPoint: Identifiable {
+    var id: UUID { examId }          // 稳定身份，避免图表生长动画闪烁
+    let examId: UUID
+    let examName: String
+    let date: Date
+    let score: Double
+    let fullScore: Double
+    // 得分率 0-1
+    var ratio: Double { fullScore > 0 ? score / fullScore : 0 }
+}
+
+struct StudentExamRecord: Identifiable {
+    var id: UUID { exam.id }
+    let exam: Exam
+    let total: Double
+    let fullTotal: Double
+    let subjectScores: [(subject: String, score: Double, full: Double)]
+    // 总得分率 0-1
+    var totalRatio: Double { fullTotal > 0 ? total / fullTotal : 0 }
 }

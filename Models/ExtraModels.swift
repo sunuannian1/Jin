@@ -49,17 +49,26 @@ struct AlbumFolder: Identifiable, Codable {
     let id: UUID
     var name: String
     var category: String        // 如：班级活动、运动会、日常
+    var desc: String?           // 相册描述（v2，Optional 兼容旧数据）
     var isPinned: Bool
+    var coverPhotoId: UUID?     // 指定封面；nil 时取第一张照片
     var photoIds: [UUID]
 
     init(id: UUID = UUID(), name: String, category: String = "班级活动",
-         isPinned: Bool = false, photoIds: [UUID] = []) {
+         desc: String? = nil, isPinned: Bool = false, coverPhotoId: UUID? = nil, photoIds: [UUID] = []) {
         self.id = id
         self.name = name
         self.category = category
+        self.desc = desc
         self.isPinned = isPinned
+        self.coverPhotoId = coverPhotoId
         self.photoIds = photoIds
     }
+}
+
+// 相册分类（对齐网页 v2 分类网格）
+enum AlbumCategory {
+    static let all = ["班级活动", "运动会", "日常点滴", "学习成长", "荣誉表彰", "其他"]
 }
 
 // MARK: - 相册照片（图片二进制按 id 存 Documents/Photos 目录）

@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Charts
 
 // 学生名册 — 高级排版版
 struct StudentListView: View {
@@ -335,6 +336,8 @@ struct StudentDetailView: View {
     @Environment(\.openURL) private var openURL
     let studentId: UUID
     @State private var editing = false
+    @State private var noteDraft: String = ""
+    @State private var noteLoaded = false
 
     private var student: Student? { viewModel.student(id: studentId) }
 
@@ -437,15 +440,12 @@ struct StudentDetailView: View {
                             value: student.dormitory.isEmpty ? "—" : student.dormitory)
                 }
 
-                // 备注
-                if !student.notes.isEmpty {
-                    detailSection(title: "备注", systemImage: "note.text") {
-                        Text(student.notes)
-                            .font(AppTheme.Fonts.body)
-                            .foregroundColor(AppTheme.Colors.primaryText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
+                // 成绩趋势 + 历次考试记录（对齐网页学生详情成绩模块）
+                StudentScoreSection(studentId: student.id)
+                    .padding(.horizontal, 18)
+
+                // 私密备注（可直接编辑保存）
+                noteSection(student: student)
 
                 // 操作按钮
                 VStack(spacing: 10) {
@@ -475,6 +475,56 @@ struct StudentDetailView: View {
             }
         }
         .background(AppTheme.Colors.background)
+    }
+
+    private func noteSection(student: Student) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "note.text")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(AppTheme.Colors.accent)
+                Text("私密备注")
+                    .font(AppTheme.Fonts.title3)
+                    .foregroundColor(AppTheme.Colors.primaryText)
+                Spacer()
+            }
+            .padding(.horizontal, 22)
+
+            Card(padding: 12) {
+                VStack(spacing: 10) {
+                    TextField("记录仅自己可见的信息，如性格、家庭情况、谈心记录…",
+                              text: $noteDraft, axis: .vertical)
+                        .font(AppTheme.Fonts.body)
+                        .foregroundColor(AppTheme.Colors.primaryText)
+                        .lineLimit(3...8)
+                        .padding(10)
+                        .background(AppTheme.Colors.subtleBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous))
+                        .onAppear {
+                            if !noteLoaded { noteDraft = student.notes; noteLoaded = true }
+                        }
+                    HStack {
+                        Spacer()
+                        Button {
+                            var updated = student
+                            updated.notes = noteDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                            viewModel.updateStudent(updated)
+                        } label: {
+                            Label("保存备注", systemImage: "checkmark.circle.fill")
+                                .font(AppTheme.Fonts.caption.weight(.semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 7)
+                                .background(noteDraft == student.notes ? AppTheme.Colors.tertiaryText : AppTheme.Colors.accentGradient)
+                                .clipShape(Capsule())
+                        }
+                        .disabled(noteDraft == student.notes)
+                        .buttonStyle(PressableButtonStyle(scale: 0.95))
+                    }
+                }
+            }
+            .padding(.horizontal, 18)
+        }
     }
 
     private func detailSection<Content: View>(title: String, systemImage: String, @ViewBuilder content: @escaping () -> Content) -> some View {
@@ -706,4 +756,276 @@ struct StudentFormView: View {
         }
         dismiss()
     }
+}
+
+// MARK: - 学生详情：成绩趋势 + 考试记录（纯 SwiftUI/Charts 复刻网页版）
+private let stuScoreDateFmt: DateFormatter = {
+    let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "yyyy/M/d"; return f
+}()
+
+struct StudentScoreSection: View {
+    @EnvironmentObject var viewModel: AppViewModel
+    let studentId: UUID
+
+    @State private var selectedSubject: String?
+    @State private var reveal: Double = 0
+    @State private var expandedExams: Set<UUID> = []
+
+    private var subjects: [String] { viewModel.subjectsTaken(by: studentId) }
+    private var subject: String {
+        if let selected = selectedSubject, subjects.contains(selected) { return selected }
+        return subjects.first ?? ""
+    }
+    private var trend: [StudentTrendPoint] {
+        subject.isEmpty ? [] : viewModel.studentTrend(studentId: studentId, subject: subject)
+    }
+    private var records: [StudentExamRecord] { viewModel.studentExamRecords(studentId: studentId) }
+    private var maxFull: Double { trend.map { $0.fullScore }.max() ?? 100 }
+
+    // 带动画因子的图表点（稳定身份，避免生长动画闪烁）
+    private var chartPoints: [StuChartPoint] {
+        trend.map { StuChartPoint(id: $0.id, examName: $0.examName, value: $0.score * reveal, real: $0.score) }
+    }
+    // 按考试类型分组，保持 单元测→月考→期中考→期末考 顺序
+    private var groupedRecords: [(Exam.ExamType, [StudentExamRecord])] {
+        Exam.ExamType.allCases.compactMap { type in
+            let items = records.filter { $0.exam.type == type }
+            return items.isEmpty ? nil : (type, items)
+        }
+    }
+
+    var body: some View {
+        if subjects.isEmpty {
+            emptyCard
+        } else {
+            VStack(spacing: 16) {
+                trendCard
+                recordsCard
+            }
+            .onAppear { replay() }
+        }
+    }
+
+    private func replay() {
+        reveal = 0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(AppTheme.Motion.chart) { reveal = 1 }
+        }
+    }
+
+    // 得分率配色（对齐网页：≥90 优 / ≥80 良 / ≥60 及格 / <60 待提升）
+    private func ratioColor(_ r: Double) -> Color {
+        if r >= 0.9 { return AppTheme.Colors.green }
+        if r >= 0.8 { return AppTheme.Colors.blue }
+        if r >= 0.6 { return AppTheme.Colors.accent }
+        return AppTheme.Colors.red
+    }
+
+    private var emptyCard: some View {
+        Card(padding: 18) {
+            HStack(spacing: 12) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 22, weight: .regular))
+                    .foregroundColor(AppTheme.Colors.tertiaryText)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("暂无成绩记录").font(AppTheme.Fonts.headline).foregroundColor(AppTheme.Colors.primaryText)
+                    Text("录入考试成绩后，这里会生成个人趋势分析").font(AppTheme.Fonts.caption).foregroundColor(AppTheme.Colors.tertiaryText)
+                }
+                Spacer()
+            }
+        }
+    }
+
+    // MARK: 成绩趋势卡
+    private var trendCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "chart.line.uptrend.xyaxis").font(.system(size: 13, weight: .semibold)).foregroundColor(AppTheme.Colors.accent)
+                Text("成绩趋势").font(AppTheme.Fonts.title3).foregroundColor(AppTheme.Colors.primaryText)
+                Spacer()
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(subjects, id: \.self) { subj in
+                        let isActive = subj == subject
+                        Button {
+                            withAnimation(AppTheme.Motion.snappy) { selectedSubject = subj }
+                            replay()
+                        } label: {
+                            Text(subj)
+                                .font(AppTheme.Fonts.caption.weight(.semibold))
+                                .foregroundColor(isActive ? .white : AppTheme.Colors.secondaryText)
+                                .padding(.horizontal, 14).padding(.vertical, 7)
+                                .background(isActive ? AnyShapeStyle(AppTheme.Colors.accentGradient) : AnyShapeStyle(AppTheme.Colors.subtleBackground))
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(PressableButtonStyle(scale: 0.92))
+                    }
+                }
+            }
+
+            if trend.isEmpty {
+                Text("\(subject) 还没有考试记录")
+                    .font(AppTheme.Fonts.footnote).foregroundColor(AppTheme.Colors.tertiaryText)
+                    .frame(maxWidth: .infinity).padding(.vertical, 24)
+            } else {
+                Chart(chartPoints) { p in
+                    AreaMark(x: .value("考试", p.examName), y: .value("分数", p.value))
+                        .foregroundStyle(LinearGradient(colors: [AppTheme.Colors.accent.opacity(0.20), AppTheme.Colors.accent.opacity(0.02)],
+                                                       startPoint: .top, endPoint: .bottom))
+                        .interpolationMethod(.catmullRom)
+                    LineMark(x: .value("考试", p.examName), y: .value("分数", p.value))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+                        .interpolationMethod(.catmullRom)
+                    PointMark(x: .value("考试", p.examName), y: .value("分数", p.value))
+                        .foregroundStyle(.white)
+                        .symbolSize(50)
+                    PointMark(x: .value("考试", p.examName), y: .value("分数", p.value))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .symbolSize(26)
+                        .annotation(position: .top) {
+                            if reveal > 0.7 {
+                                Text(String(format: "%.0f", p.real))
+                                    .font(.system(size: 10, weight: .bold).monospacedDigit())
+                                    .foregroundColor(AppTheme.Colors.primaryText)
+                                    .transition(.opacity)
+                            }
+                        }
+                }
+                .frame(height: 168)
+                .chartYScale(domain: 0...maxFull)
+                .chartXAxis {
+                    AxisMarks(position: .bottom) { _ in
+                        AxisGridLine().foregroundStyle(.clear)
+                        AxisTick().foregroundStyle(.clear)
+                        AxisValueLabel().font(.system(size: 9)).foregroundStyle(AppTheme.Colors.secondaryText)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { _ in
+                        AxisGridLine().foregroundStyle(AppTheme.Colors.separator)
+                        AxisTick().foregroundStyle(.clear)
+                        AxisValueLabel().font(.system(size: 9)).foregroundStyle(AppTheme.Colors.tertiaryText)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(AppTheme.Colors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
+            .stroke(AppTheme.Colors.separator, lineWidth: 0.5))
+        .rdShadow(AppTheme.Shadows.sm)
+        .id("stu-trend-\(subject)")
+    }
+
+    // MARK: 考试记录卡
+    private var recordsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "list.clipboard").font(.system(size: 13, weight: .semibold)).foregroundColor(AppTheme.Colors.accent)
+                Text("考试记录").font(AppTheme.Fonts.title3).foregroundColor(AppTheme.Colors.primaryText)
+                Spacer()
+                Text("\(records.count) 场").font(AppTheme.Fonts.caption).foregroundColor(AppTheme.Colors.tertiaryText)
+            }
+
+            if records.isEmpty {
+                Text("还没有考试分数")
+                    .font(AppTheme.Fonts.footnote).foregroundColor(AppTheme.Colors.tertiaryText)
+                    .frame(maxWidth: .infinity).padding(.vertical, 20)
+            } else {
+                ForEach(groupedRecords, id: \.0) { type, items in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(type.rawValue)
+                            .font(AppTheme.Fonts.caption.weight(.semibold))
+                            .foregroundColor(AppTheme.Colors.tertiaryText).tracking(0.5)
+                        ForEach(items) { rec in examRow(rec) }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(AppTheme.Colors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
+            .stroke(AppTheme.Colors.separator, lineWidth: 0.5))
+        .rdShadow(AppTheme.Shadows.sm)
+    }
+
+    private func examRow(_ rec: StudentExamRecord) -> some View {
+        let isOpen = expandedExams.contains(rec.id)
+        return VStack(spacing: 0) {
+            Button {
+                withAnimation(AppTheme.Motion.smooth) {
+                    if isOpen { expandedExams.remove(rec.id) } else { expandedExams.insert(rec.id) }
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Circle().fill(ratioColor(rec.totalRatio)).frame(width: 8, height: 8)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(rec.exam.name).font(AppTheme.Fonts.callout.weight(.medium)).foregroundColor(AppTheme.Colors.primaryText)
+                        Text(stuScoreDateFmt.string(from: rec.exam.date)).font(AppTheme.Fonts.caption2).foregroundColor(AppTheme.Colors.tertiaryText)
+                    }
+                    Spacer()
+                    Text(String(format: "%.0f/%.0f", rec.total, rec.fullTotal))
+                        .font(.system(size: 13, weight: .bold).monospacedDigit())
+                        .foregroundColor(ratioColor(rec.totalRatio))
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(AppTheme.Colors.tertiaryText)
+                        .rotationEffect(.degrees(isOpen ? -180 : 0))
+                }
+                .padding(.horizontal, 12).padding(.vertical, 11)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isOpen {
+                VStack(spacing: 0) {
+                    Divider().background(AppTheme.Colors.separator)
+                    ForEach(Array(rec.subjectScores.enumerated()), id: \.offset) { idx, item in
+                        HStack(spacing: 10) {
+                            Text(item.subject)
+                                .font(AppTheme.Fonts.footnote).foregroundColor(AppTheme.Colors.secondaryText)
+                                .frame(width: 48, alignment: .leading)
+                            scoreRatioBar(ratio: item.full > 0 ? item.score / item.full : 0)
+                            Spacer()
+                            Text(String(format: "%.0f", item.score))
+                                .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                                .foregroundColor(ratioColor(item.full > 0 ? item.score / item.full : 0))
+                                .frame(width: 44, alignment: .trailing)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        if idx < rec.subjectScores.count - 1 {
+                            Divider().background(AppTheme.Colors.separator).padding(.leading, 12)
+                        }
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .background(AppTheme.Colors.subtleBackground.opacity(0.5))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.element, style: .continuous))
+    }
+
+    // 迷你得分率条
+    private func scoreRatioBar(ratio: Double) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(AppTheme.Colors.separator).frame(height: 5)
+                Capsule().fill(ratioColor(ratio))
+                    .frame(width: max(4, geo.size.width * CGFloat(min(max(ratio, 0), 1))), height: 5)
+            }
+        }
+        .frame(width: 76, height: 5)
+    }
+}
+
+private struct StuChartPoint: Identifiable {
+    let id: UUID
+    let examName: String
+    let value: Double
+    let real: Double
 }
