@@ -627,11 +627,6 @@ extension AppTheme {
         /// 极轻反馈
         static let quick = Animation.easeOut(duration: 0.16)
 
-        /// 尊重系统「减弱动态效果」：开启时退化为无动画
-        static func adaptive(_ animation: Animation) -> Animation {
-            UIAccessibility.isReduceMotionEnabled ? .none : animation
-        }
-
         /// 依次入场的阶梯延迟（封顶，避免长列表末尾等待过久）
         static func stagger(_ index: Int, step: Double = 0.045, cap: Double = 0.45) -> Animation {
             smooth.delay(min(Double(index) * step, cap))

@@ -309,7 +309,19 @@ struct ScoreDetailView: View {
                     }
             }
             .frame(height: 158)
-            .chartXSelection(value: $selectedBar)
+            .chartOverlay { proxy in
+                GeometryReader { _ in
+                    Rectangle().fill(.clear).contentShape(Rectangle())
+                        .onTapGesture { location in
+                            // iOS16 兼容的分类轴点选：再次点同一柱取消选中
+                            if let label = proxy.value(atX: location.x, as: String.self) {
+                                withAnimation(AppTheme.Motion.quick) {
+                                    selectedBar = (selectedBar == label ? nil : label)
+                                }
+                            }
+                        }
+                }
+            }
             .chartXAxis {
                 AxisMarks(position: .bottom) { _ in
                     AxisGridLine().foregroundStyle(Color.clear)
