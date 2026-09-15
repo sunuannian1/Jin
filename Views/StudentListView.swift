@@ -515,7 +515,7 @@ struct StudentDetailView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 7)
-                                .background(noteDraft == student.notes ? AppTheme.Colors.tertiaryText : AppTheme.Colors.accentGradient)
+                                .background(noteDraft == student.notes ? AnyShapeStyle(AppTheme.Colors.tertiaryText) : AnyShapeStyle(AppTheme.Colors.accentGradient))
                                 .clipShape(Capsule())
                         }
                         .disabled(noteDraft == student.notes)
