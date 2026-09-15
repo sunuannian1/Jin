@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 import UIKit
 
 // 学生名册 — 高级排版版
@@ -92,13 +92,14 @@ struct StudentListView: View {
                         .padding(.top, 4)
 
                         // 学生卡片列表
-                        ForEach(filteredStudents) { student in
+                        ForEach(Array(filteredStudents.enumerated()), id: \.element.id) { index, student in
                             NavigationLink {
                                 StudentDetailView(studentId: student.id)
                             } label: {
                                 StudentCard(student: student)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(PressableButtonStyle())
+                            .staggeredAppear(index: index, step: 0.035)
                             .contextMenu {
                                 if !student.phone.isEmpty, let url = telURL(student.phone) {
                                     Button {
@@ -115,7 +116,9 @@ struct StudentListView: View {
                                     }
                                 }
                                 Button(role: .destructive) {
-                                    viewModel.deleteStudent(student)
+                                    withAnimation(AppTheme.Motion.smooth) {
+                                        viewModel.deleteStudent(student)
+                                    }
                                 } label: {
                                     Label("删除学生", systemImage: "trash")
                                 }
@@ -124,6 +127,9 @@ struct StudentListView: View {
                     }
                     .padding(.horizontal, 18)
                     .padding(.bottom, 24)
+                    .animation(AppTheme.Motion.snappy, value: searchText)
+                    .animation(AppTheme.Motion.smooth, value: seatFilter)
+                    .animation(AppTheme.Motion.smooth, value: sortOption)
                 }
                 .background(AppTheme.Colors.background)
             }

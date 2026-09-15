@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 
 // 工作台首页 — 高级排版版
 struct HomeView: View {
@@ -38,11 +38,11 @@ struct HomeView: View {
         ScrollView {
             VStack(spacing: 16) {
                 header
-                statCards
-                functionGrid
-                dutySection
-                coursesSection
-                todoSection
+                statCards.staggeredAppear(index: 0)
+                functionGrid.staggeredAppear(index: 1)
+                dutySection.staggeredAppear(index: 2)
+                coursesSection.staggeredAppear(index: 3)
+                todoSection.staggeredAppear(index: 4)
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 18)
@@ -158,77 +158,62 @@ struct HomeView: View {
         }
     }
 
-    // 根据功能配置渲染对应按钮
+    // 功能入口主题色
+    private func featureColor(for id: String) -> Color {
+        switch id {
+        case "schedule": return .purple
+        case "duty": return .green
+        case "seat": return .teal
+        case "map": return .brown
+        case "album": return .cyan
+        case "notification": return .red
+        case "ranking": return .pink
+        case "scoreImport": return .orange
+        case "templates": return .indigo
+        case "settings": return .gray
+        case "print": return .blue
+        default: return .gray
+        }
+    }
+
+    // 根据功能配置渲染对应按钮（统一丝滑按压手感）
     @ViewBuilder
     private func featureButton(for feature: AppViewModel.HomeFeature) -> some View {
+        let label = FeatureButton(title: feature.name, systemImage: feature.systemImage,
+                                  color: featureColor(for: feature.id))
         switch feature.id {
-        case "schedule":
-            NavigationLink { ScheduleView() } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .purple)
-            }
-            .buttonStyle(.plain)
-        case "duty":
-            NavigationLink { DutyView() } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .green)
-            }
-            .buttonStyle(.plain)
-        case "seat":
-            NavigationLink { SeatView() } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .teal)
-            }
-            .buttonStyle(.plain)
-        case "map":
-            NavigationLink { ClassMapView() } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .brown)
-            }
-            .buttonStyle(.plain)
-        case "album":
-            NavigationLink { AlbumListView() } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .cyan)
-            }
-            .buttonStyle(.plain)
         case "notification":
-            Button {
-                showingCompose = true
-            } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .red)
-            }
-            .buttonStyle(.plain)
-        case "ranking":
-            NavigationLink { RankingListView() } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .pink)
-            }
-            .buttonStyle(.plain)
-        case "scoreImport":
-            NavigationLink { ExamListView() } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .orange)
-            }
-            .buttonStyle(.plain)
-        case "templates":
-            NavigationLink { NotificationTemplateView() } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .indigo)
-            }
-            .buttonStyle(.plain)
-        case "settings":
-            NavigationLink { SettingsView() } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .gray)
-            }
-            .buttonStyle(.plain)
+            Button { withAnimation(AppTheme.Motion.quick) { showingCompose = true } } label: { label }
+                .buttonStyle(PressableButtonStyle(scale: 0.86))
         case "print":
             Button {
-                // 打印中心：快速打印课表
                 PrintService.shared.printSchedule(
                     className: viewModel.classInfo.className,
                     weekDays: ["周一","周二","周三","周四","周五","周六","周日"],
                     periods: Array(1...8),
                     schedule: []
                 )
-            } label: {
-                FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .blue)
-            }
-            .buttonStyle(.plain)
+            } label: { label }
+                .buttonStyle(PressableButtonStyle(scale: 0.86))
         default:
-            FeatureButton(title: feature.name, systemImage: feature.systemImage, color: .gray)
+            NavigationLink { featureDestination(for: feature.id) } label: { label }
+                .buttonStyle(PressableButtonStyle(scale: 0.86))
+        }
+    }
+
+    @ViewBuilder
+    private func featureDestination(for id: String) -> some View {
+        switch id {
+        case "schedule": ScheduleView()
+        case "duty": DutyView()
+        case "seat": SeatView()
+        case "map": ClassMapView()
+        case "album": AlbumListView()
+        case "ranking": RankingListView()
+        case "scoreImport": ExamListView()
+        case "templates": NotificationTemplateView()
+        case "settings": SettingsView()
+        default: EmptyView()
         }
     }
 
@@ -245,7 +230,7 @@ struct HomeView: View {
                             .tracking(-0.3)
                         Spacer()
                         Button {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            withAnimation(AppTheme.Motion.snappy) {
                                 viewModel.nextDutyGroup()
                             }
                         } label: {
@@ -336,6 +321,7 @@ struct HomeView: View {
                                     .foregroundColor(AppTheme.Colors.tertiaryText)
                             }
                             .padding(.vertical, 10)
+                            .staggeredAppear(index: index, step: 0.06)
                             if index < todayCourses.count - 1 {
                                 Divider()
                                     .background(AppTheme.Colors.separator)
@@ -396,7 +382,7 @@ struct HomeView: View {
                         ForEach(Array(todayTodos.enumerated()), id: \.element.id) { index, todo in
                             HStack(spacing: 12) {
                                 Button {
-                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+                                    withAnimation(AppTheme.Motion.bouncy) {
                                         viewModel.toggleTodo(todo)
                                     }
                                 } label: {
@@ -408,14 +394,16 @@ struct HomeView: View {
                                             Image(systemName: "checkmark")
                                                 .font(.system(size: 12, weight: .bold))
                                                 .foregroundColor(.white)
+                                                .transition(.scale.combined(with: .opacity))
                                         } else {
                                             RoundedRectangle(cornerRadius: 6, style: .continuous)
                                                 .stroke(AppTheme.Colors.tertiaryText, lineWidth: 1.5)
                                                 .frame(width: 22, height: 22)
                                         }
                                     }
+                                    .animation(AppTheme.Motion.bouncy, value: todo.isCompleted)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(PressableButtonStyle(scale: 0.8))
 
                                 Text(todo.title)
                                     .font(AppTheme.Fonts.body)
@@ -423,14 +411,16 @@ struct HomeView: View {
                                     .strikethrough(todo.isCompleted, color: AppTheme.Colors.tertiaryText)
                                 Spacer()
                                 Button {
-                                    viewModel.deleteTodo(todo)
+                                    withAnimation(AppTheme.Motion.smooth) {
+                                        viewModel.deleteTodo(todo)
+                                    }
                                 } label: {
                                     Image(systemName: "xmark")
                                         .font(.system(size: 12, weight: .semibold))
                                         .foregroundColor(AppTheme.Colors.tertiaryText)
                                         .frame(width: 24, height: 24)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(PressableButtonStyle(scale: 0.8))
                             }
                             .padding(.vertical, 10)
                             if index < todayTodos.count - 1 {

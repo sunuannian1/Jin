@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 import UIKit
 
 // MARK: - 高级设计系统
@@ -610,5 +610,73 @@ extension UIColor {
                            alpha: alpha)
         }
         return self
+    }
+}
+
+// MARK: - 统一动效系统（丝滑弹簧曲线 + 减弱动效适配）
+extension AppTheme {
+    enum Motion {
+        /// 标准干脆：按钮、开关、选中态
+        static let snappy = Animation.spring(response: 0.30, dampingFraction: 0.80)
+        /// 顺滑：卡片、面板、列表增删
+        static let smooth = Animation.spring(response: 0.42, dampingFraction: 0.88)
+        /// Q 弹：领奖台、勾选、强调元素
+        static let bouncy = Animation.spring(response: 0.52, dampingFraction: 0.62)
+        /// 图表生长
+        static let chart = Animation.spring(response: 0.75, dampingFraction: 0.82)
+        /// 极轻反馈
+        static let quick = Animation.easeOut(duration: 0.16)
+
+        /// 尊重系统「减弱动态效果」：开启时退化为无动画
+        static func adaptive(_ animation: Animation) -> Animation {
+            UIAccessibility.isReduceMotionEnabled ? .none : animation
+        }
+
+        /// 依次入场的阶梯延迟（封顶，避免长列表末尾等待过久）
+        static func stagger(_ index: Int, step: Double = 0.045, cap: Double = 0.45) -> Animation {
+            smooth.delay(min(Double(index) * step, cap))
+        }
+    }
+}
+
+// MARK: - 按压回弹按钮样式（全局统一的丝滑按压手感）
+struct PressableButtonStyle: ButtonStyle {
+    var scale: CGFloat = 0.96
+    var opacity: Double = 1.0
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .opacity(configuration.isPressed ? opacity : 1)
+            .animation(AppTheme.Motion.snappy, value: configuration.isPressed)
+    }
+}
+
+// MARK: - 列表依次入场修饰器
+struct StaggeredAppear: ViewModifier {
+    let index: Int
+    var step: Double = 0.045
+    var offset: CGFloat = 16
+    @State private var appeared = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : offset)
+            .onAppear {
+                guard !UIAccessibility.isReduceMotionEnabled else { appeared = true; return }
+                withAnimation(AppTheme.Motion.stagger(index, step: step)) { appeared = true }
+            }
+    }
+}
+
+extension View {
+    /// 列表/卡片依次淡入上移
+    func staggeredAppear(index: Int, step: Double = 0.045) -> some View {
+        modifier(StaggeredAppear(index: index, step: step))
+    }
+
+    /// 数值变化时翻滚过渡（需配合 withAnimation 驱动）
+    func numericRoll() -> some View {
+        contentTransition(.numericText())
     }
 }

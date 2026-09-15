@@ -77,7 +77,7 @@ struct TodoListView: View {
     private func todoRow(_ todo: TodoItem) -> some View {
         HStack(spacing: 12) {
             Button {
-                withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+                withAnimation(AppTheme.Motion.bouncy) {
                     viewModel.toggleTodo(todo)
                 }
             } label: {
@@ -89,14 +89,16 @@ struct TodoListView: View {
                         Image(systemName: "checkmark")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.white)
+                            .transition(.scale.combined(with: .opacity))
                     } else {
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .stroke(Color.gray.opacity(0.4), lineWidth: 1.5)
                             .frame(width: 22, height: 22)
                     }
                 }
+                .animation(AppTheme.Motion.bouncy, value: todo.isCompleted)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableButtonStyle(scale: 0.8))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(todo.title)
@@ -118,13 +120,15 @@ struct TodoListView: View {
             }
             Spacer()
             Button(role: .destructive) {
-                viewModel.deleteTodo(todo)
+                withAnimation(AppTheme.Motion.smooth) {
+                    viewModel.deleteTodo(todo)
+                }
             } label: {
                 Image(systemName: "trash")
                     .font(.system(size: 14))
                     .foregroundColor(.red.opacity(0.6))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableButtonStyle(scale: 0.8))
         }
         .padding(.vertical, 4)
     }

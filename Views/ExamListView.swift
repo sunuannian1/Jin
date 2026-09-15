@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 import UniformTypeIdentifiers
 
 // 成绩管理 — 高级排版版
@@ -51,16 +51,19 @@ struct ExamListView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 40)
                         } else {
-                            ForEach(filteredExams) { exam in
+                            ForEach(Array(filteredExams.enumerated()), id: \.element.id) { index, exam in
                                 NavigationLink {
                                     ScoreDetailView(exam: exam)
                                 } label: {
                                     ExamCard(exam: exam)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(PressableButtonStyle())
+                                .staggeredAppear(index: index)
                                 .contextMenu {
                                     Button(role: .destructive) {
-                                        viewModel.deleteExam(exam)
+                                        withAnimation(AppTheme.Motion.smooth) {
+                                            viewModel.deleteExam(exam)
+                                        }
                                     } label: {
                                         Label("删除考试", systemImage: "trash")
                                     }
@@ -70,6 +73,8 @@ struct ExamListView: View {
                     }
                     .padding(.horizontal, 18)
                     .padding(.bottom, 32)
+                    .animation(AppTheme.Motion.smooth, value: typeFilter)
+                    .animation(AppTheme.Motion.smooth, value: viewModel.currentSemesterId)
                 }
                 .background(AppTheme.Colors.background)
             }
@@ -194,8 +199,9 @@ struct ExamListView: View {
                     }
                 )
                 .clipShape(Capsule())
+                .animation(AppTheme.Motion.snappy, value: isActive)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableButtonStyle(scale: 0.92))
     }
 }
 
@@ -514,7 +520,7 @@ struct ScoreCSVImportView: View {
                         .font(AppTheme.Fonts.subheadline.weight(.medium))
                         .foregroundColor(AppTheme.Colors.primaryText)
                     Spacer()
-                    Text("$($parsedRows.Count) 行")
+                    Text("\(parsedRows.count) 行")
                         .font(AppTheme.Fonts.caption)
                         .foregroundColor(AppTheme.Colors.tertiaryText)
                 }
@@ -539,7 +545,7 @@ struct ScoreCSVImportView: View {
                 }
                 if !subjectColumns.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("识别到 $($subjectColumns.Count) 个科目列")
+                        Text("识别到 \(subjectColumns.count) 个科目列")
                             .font(AppTheme.Fonts.caption.weight(.semibold))
                             .foregroundColor(AppTheme.Colors.tertiaryText)
                         HStack(spacing: 6) {

@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 import UniformTypeIdentifiers
 
 // 我的页面 — 高级排版版
@@ -404,8 +404,10 @@ struct ThemePickerView: View {
 
                     ForEach(AppTheme.Theme.allCases, id: \.self) { theme in
                         Button {
-                            selectedTheme = theme
-                            AppTheme.currentTheme = theme
+                            withAnimation(AppTheme.Motion.snappy) {
+                                selectedTheme = theme
+                                AppTheme.currentTheme = theme
+                            }
                             // 发送通知让全局刷新
                             NotificationCenter.default.post(name: NSNotification.Name("ThemeChanged"), object: nil)
                         } label: {
@@ -445,8 +447,9 @@ struct ThemePickerView: View {
                                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.card, style: .continuous)
                                     .stroke(theme == selectedTheme ? AppTheme.Colors.accent : AppTheme.Colors.separator, lineWidth: theme == selectedTheme ? 1.5 : 0.5)
                             )
+                            .animation(AppTheme.Motion.snappy, value: selectedTheme)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PressableButtonStyle(scale: 0.97))
                     }
                 }
                 .padding(18)

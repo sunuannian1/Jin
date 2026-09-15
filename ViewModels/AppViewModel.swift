@@ -1,4 +1,4 @@
-﻿import Foundation
+import Foundation
 import SwiftUI
 import Combine
 
@@ -284,7 +284,51 @@ class AppViewModel: ObservableObject {
         let pass = records.filter { $0.score >= 60 }.count
         return Double(pass) / Double(records.count) * 100
     }
-    // 总分排名
+    // 某科目全部分数（升序）
+    private func sortedScores(examId: UUID, subject: String) -> [Double] {
+        scores(for: examId, subject: subject).map { $0.score }.sorted()
+    }
+    // 最高分
+    func highestScore(examId: UUID, subject: String) -> Double {
+        sortedScores(examId: examId, subject: subject).max() ?? 0
+    }
+    // 最低分
+    func lowestScore(examId: UUID, subject: String) -> Double {
+        sortedScores(examId: examId, subject: subject).min() ?? 0
+    }
+    // 中位数
+    func medianScore(examId: UUID, subject: String) -> Double {
+        let sorted = sortedScores(examId: examId, subject: subject)
+        guard !sorted.isEmpty else { return 0 }
+        let n = sorted.count
+        if n % 2 == 1 { return sorted[n / 2] }
+        return (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+    }
+    // 标准差（分数离散程度，越小越整齐）
+    func stdDeviation(examId: UUID, subject: String) -> Double {
+        let values = scores(for: examId, subject: subject).map { $0.score }
+        guard values.count > 1 else { return 0 }
+        let mean = values.reduce(0, +) / Double(values.count)
+        let variance = values.map { pow($0 - mean, 2) }.reduce(0, +) / Double(values.count)
+        return sqrt(variance)
+    }
+    // 优秀率（>=90 占比）
+    func excellentRate(examId: UUID, subject: String) -> Double {
+        let records = scores(for: examId, subject: subject)
+        guard !records.isEmpty else { return 0 }
+        let excellent = records.filter { $0.score >= 90 }.count
+        return Double(excellent) / Double(records.count) * 100
+    }
+    // 相比上一次同科目考试的均分变化（正=进步，负=退步；无可比则为 nil）
+    func averageTrendDelta(examId: UUID, subject: String) -> Double? {
+        let sameSubjectExams = exams.filter { $0.subjects.contains(subject) }.sorted { $0.date < $1.date }
+        guard let idx = sameSubjectExams.firstIndex(where: { $0.id == examId }), idx > 0 else { return nil }
+        let prev = averageScore(examId: sameSubjectExams[idx - 1].id, subject: subject)
+        let current = averageScore(examId: examId, subject: subject)
+        guard prev > 0 else { return nil }
+        return current - prev
+    }
+
     func totalRanking(for examId: UUID) -> [(student: Student, total: Double)] {
         students
             .map { (student: $0, total: totalScore(of: $0.id, examId: examId)) }
