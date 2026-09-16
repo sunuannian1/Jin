@@ -61,7 +61,7 @@ struct ScheduleView: View {
             headerRow
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
-                    ForEach(periodInfos) { info in
+                    ForEach(periodInfos, id: \.period) { info in
                         periodRow(info)
                         if info.period == 2 { breakRow(label: "大课间 9:40-10:10") }
                         if info.period == 4 { breakRow(label: "午休 11:50-14:30") }
