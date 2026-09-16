@@ -133,7 +133,7 @@ struct AlbumCard: View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
                 if let coverId {
-                    PhotoThumbView(photoId: coverId, alignment: .top)
+                    PhotoThumbView(photoId: coverId, alignment: .center)
                         .id(coverId)
                         .scaledToFill()
                 } else {
@@ -425,34 +425,42 @@ struct AlbumDetailView: View {
         }
     }
 
-    // 相册头部横幅：封面 + 渐变遮罩 + 名称/描述/张数
+    // 相册头部横幅：封面整幅压暗 + 毛玻璃信息条（任何封面图都协调，不突兀）
     private func albumHeader(for folder: AlbumFolder) -> some View {
         ZStack(alignment: .bottomLeading) {
             if let coverId = viewModel.coverPhotoId(of: folder) {
-                PhotoThumbView(photoId: coverId, alignment: .top)
+                PhotoThumbView(photoId: coverId, alignment: .center)
                     .id(coverId)
             } else {
                 LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
                                startPoint: .topLeading, endPoint: .bottomTrailing)
             }
-            LinearGradient(colors: [.clear, .black.opacity(0.62)], startPoint: .center, endPoint: .bottom)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(folder.name)
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.white)
-                if let desc = folder.desc, !desc.isEmpty {
-                    Text(desc)
-                        .font(AppTheme.Fonts.footnote)
-                        .foregroundColor(.white.opacity(0.92))
-                        .lineLimit(2)
+            // 整幅压暗：顶部轻、底部重，压住任何封面图的细节
+            LinearGradient(colors: [.black.opacity(0.16), .black.opacity(0.42), .black.opacity(0.74)],
+                           startPoint: .top, endPoint: .bottom)
+
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(folder.name)
+                        .font(.system(size: 19, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    Text("\(orderedPhotos.count) 张照片")
+                        .font(AppTheme.Fonts.caption.weight(.medium))
+                        .foregroundColor(.white.opacity(0.82))
                 }
-                Text("\(orderedPhotos.count) 张照片")
-                    .font(AppTheme.Fonts.caption.weight(.medium))
-                    .foregroundColor(.white.opacity(0.85))
+                Spacer()
+                Image(systemName: "photo.on.rectangle.angled")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
             }
-            .padding(16)
+            .padding(.horizontal, 14).padding(.vertical, 11)
+            .background(.ultraThinMaterial.opacity(0.45), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(.white.opacity(0.18), lineWidth: 0.5))
+            .padding(14)
         }
-        .frame(height: 200)
+        .frame(height: 170)
         .frame(maxWidth: .infinity)
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -493,7 +501,7 @@ struct AlbumDetailView: View {
             }
         } label: {
             ZStack {
-                PhotoThumbView(photoId: photo.id, alignment: .top)
+                PhotoThumbView(photoId: photo.id, alignment: .center)
                     .aspectRatio(1, contentMode: .fill)
                     .frame(maxWidth: .infinity)
                     .clipped()
