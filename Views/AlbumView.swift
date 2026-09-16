@@ -310,7 +310,7 @@ struct AlbumDetailView: View {
     }
     // 与网格一致的扁平顺序，供大图浏览
     private var orderedPhotos: [AlbumPhoto] { dateSections.flatMap { $0.photos } }
-    private let gridColumns = [GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3)]
+    private let gridColumns = [GridItem(.flexible(), spacing: 2), GridItem(.flexible(), spacing: 2), GridItem(.flexible(), spacing: 2)]
 
     var body: some View {
         Group {
@@ -361,16 +361,17 @@ struct AlbumDetailView: View {
                 )
             } else {
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 18, pinnedViews: []) {
+                    LazyVStack(alignment: .leading, spacing: 16, pinnedViews: []) {
+                        albumHeader(for: folder)
                         ForEach(dateSections, id: \.date) { section in
                             VStack(alignment: .leading, spacing: 8) {
                                 dateHeader(section)
-                                LazyVGrid(columns: gridColumns, spacing: 3) {
+                                LazyVGrid(columns: gridColumns, spacing: 2) {
                                     ForEach(Array(section.photos.enumerated()), id: \.element.id) { index, photo in
                                         photoCell(photo, index: index)
                                     }
                                 }
-                                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous))
+                                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                             }
                         }
                     }
@@ -423,17 +424,59 @@ struct AlbumDetailView: View {
         }
     }
 
+    // 相册头部横幅：封面 + 渐变遮罩 + 名称/描述/张数
+    private func albumHeader(for folder: AlbumFolder) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            if let coverId = viewModel.coverPhotoId(of: folder) {
+                PhotoThumbView(photoId: coverId)
+            } else {
+                LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+            }
+            LinearGradient(colors: [.clear, .black.opacity(0.62)], startPoint: .center, endPoint: .bottom)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(folder.name)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.white)
+                if let desc = folder.desc, !desc.isEmpty {
+                    Text(desc)
+                        .font(AppTheme.Fonts.footnote)
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(2)
+                }
+                Text("\(orderedPhotos.count) 张照片")
+                    .font(AppTheme.Fonts.caption.weight(.medium))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+            .padding(16)
+        }
+        .frame(height: 200)
+        .frame(maxWidth: .infinity)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .stroke(AppTheme.Colors.separator, lineWidth: 0.5))
+        .rdShadow(AppTheme.Shadows.md)
+    }
+
     private func dateHeader(_ section: (date: Date, photos: [AlbumPhoto])) -> some View {
         HStack(spacing: 6) {
+            Image(systemName: "calendar")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(AppTheme.Colors.accent)
             Text(albumSectionFmt.string(from: section.date))
                 .font(AppTheme.Fonts.caption.weight(.semibold))
-                .foregroundColor(AppTheme.Colors.secondaryText)
-            Text("· \(section.photos.count) 张")
-                .font(AppTheme.Fonts.caption2)
-                .foregroundColor(AppTheme.Colors.tertiaryText)
+                .foregroundColor(AppTheme.Colors.primaryText)
             Spacer()
+            Text("\(section.photos.count) 张")
+                .font(AppTheme.Fonts.caption2.weight(.medium))
+                .foregroundColor(AppTheme.Colors.secondaryText)
         }
-        .padding(.horizontal, 2)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(AppTheme.Colors.cardBackground.opacity(0.88)))
+        .overlay(Capsule().stroke(AppTheme.Colors.separator, lineWidth: 0.5))
+        .rdShadow(AppTheme.Shadows.sm)
     }
 
     private func photoCell(_ photo: AlbumPhoto, index: Int) -> some View {
@@ -617,11 +660,10 @@ struct PhotoBrowserView: View {
 
             TabView(selection: $currentId) {
                 ForEach(localPhotos) { photo in
-                    ZoomablePhoto(photoId: photo.id)
-                        .tag(Optional(photo.id))
-                        .onTapGesture {
-                            withAnimation(AppTheme.Motion.quick) { chromeHidden.toggle() }
-                        }
+                    ZoomablePhoto(photoId: photo.id) {
+                        withAnimation(AppTheme.Motion.quick) { chromeHidden.toggle() }
+                    }
+                    .tag(Optional(photo.id))
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -782,28 +824,18 @@ struct PhotoBrowserView: View {
     }
 }
 
-// 可缩放的单张大图
+// 可缩放的单张大图（UIScrollView 原生缩放：捏合缩放 + 双击切换 + 放大后平移回弹）
 struct ZoomablePhoto: View {
     @EnvironmentObject var viewModel: AppViewModel
     let photoId: UUID
+    var onTap: () -> Void = {}
     @State private var image: UIImage?
-    @State private var scale: CGFloat = 1
 
     var body: some View {
         Group {
             if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .scaleEffect(scale)
-                    .gesture(
-                        MagnificationGesture()
-                            .onChanged { scale = max(1, min($0, 4)) }
-                            .onEnded { _ in withAnimation(AppTheme.Motion.snappy) { scale = 1 } }
-                    )
-                    .onTapGesture(count: 2) {
-                        withAnimation(AppTheme.Motion.snappy) { scale = scale > 1 ? 1 : 2.2 }
-                    }
+                PhotoZoomView(image: image, onSingleTap: onTap)
+                    .ignoresSafeArea()
             } else {
                 ProgressView().tint(.white)
             }
@@ -811,6 +843,112 @@ struct ZoomablePhoto: View {
         .onAppear {
             if image == nil { image = viewModel.photoData(id: photoId).flatMap(UIImage.init(data:)) }
         }
+    }
+}
+
+// UIScrollView 包装：捏合缩放 / 双击切换 / 放大平移，丝滑回弹（机制参考 MIT 开源 Ceylo/Zoomable）
+struct PhotoZoomView: UIViewControllerRepresentable {
+    let image: UIImage
+    var onSingleTap: () -> Void = {}
+
+    func makeUIViewController(context: Context) -> PhotoZoomVC {
+        PhotoZoomVC(image: image, onSingleTap: onSingleTap)
+    }
+    func updateUIViewController(_ ui: PhotoZoomVC, context: Context) {
+        ui.onSingleTap = onSingleTap
+    }
+}
+
+final class PhotoZoomVC: UIViewController, UIScrollViewDelegate {
+    private let scrollView = UIScrollView()
+    private let imageView = UIImageView()
+    private var didInitialFit = false
+    var onSingleTap: () -> Void = {}
+
+    init(image: UIImage, onSingleTap: @escaping () -> Void) {
+        self.onSingleTap = onSingleTap
+        super.init(nibName: nil, bundle: nil)
+        imageView.image = image
+        imageView.contentMode = .scaleAspectFit
+        imageView.isUserInteractionEnabled = true
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        scrollView.delegate = self
+        scrollView.minimumZoomScale = 1
+        scrollView.maximumZoomScale = 4
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.contentInsetAdjustmentBehavior = .never
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .black
+
+        view.addSubview(scrollView)
+        scrollView.addSubview(imageView)
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+
+        // 双击缩放；单击切换 chrome（单击需等待双击判定失败）
+        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap))
+        doubleTap.numberOfTapsRequired = 2
+        let singleTap = UITapGestureRecognizer(target: self, action: #selector(handleSingleTap))
+        singleTap.numberOfTapsRequired = 1
+        singleTap.require(toFail: doubleTap)
+        scrollView.addGestureRecognizer(doubleTap)
+        scrollView.addGestureRecognizer(singleTap)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if !didInitialFit, scrollView.bounds.width > 0 {
+            didInitialFit = true
+            applyFit()
+        }
+        centerContent()
+    }
+
+    private func applyFit() {
+        guard let size = imageView.image?.size, size.width > 0, size.height > 0 else { return }
+        let fit = min(scrollView.bounds.width / size.width, scrollView.bounds.height / size.height)
+        scrollView.minimumZoomScale = fit
+        scrollView.maximumZoomScale = max(4, fit)
+        scrollView.zoomScale = fit
+        imageView.frame = CGRect(origin: .zero, size: CGSize(width: size.width * fit, height: size.height * fit))
+        scrollView.contentSize = imageView.frame.size
+        centerContent()
+    }
+
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? { imageView }
+
+    func scrollViewDidZoom(_ scrollView: UIScrollView) { centerContent() }
+
+    private func centerContent() {
+        let boundsSize = scrollView.bounds.size
+        let contentSize = imageView.frame.size
+        let offsetX = max((boundsSize.width - contentSize.width) * 0.5, 0)
+        let offsetY = max((boundsSize.height - contentSize.height) * 0.5, 0)
+        scrollView.contentInset = UIEdgeInsets(top: offsetY, left: offsetX, bottom: 0, right: 0)
+    }
+
+    @objc private func handleSingleTap() { onSingleTap() }
+
+    @objc private func handleDoubleTap() {
+        let current = scrollView.zoomScale
+        let target: CGFloat
+        if current <= scrollView.minimumZoomScale * 1.01 {
+            target = min(scrollView.maximumZoomScale, scrollView.minimumZoomScale * 2.5)
+        } else {
+            target = scrollView.minimumZoomScale
+        }
+        scrollView.setZoomScale(target, animated: true)
     }
 }
 
