@@ -133,7 +133,8 @@ struct AlbumCard: View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
                 if let coverId {
-                    PhotoThumbView(photoId: coverId)
+                    PhotoThumbView(photoId: coverId, alignment: .top)
+                        .id(coverId)
                         .scaledToFill()
                 } else {
                     gradient.overlay(
@@ -310,7 +311,7 @@ struct AlbumDetailView: View {
     }
     // 与网格一致的扁平顺序，供大图浏览
     private var orderedPhotos: [AlbumPhoto] { dateSections.flatMap { $0.photos } }
-    private let gridColumns = [GridItem(.flexible(), spacing: 2), GridItem(.flexible(), spacing: 2), GridItem(.flexible(), spacing: 2)]
+    private let gridColumns = [GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3)]
 
     var body: some View {
         Group {
@@ -366,12 +367,12 @@ struct AlbumDetailView: View {
                         ForEach(dateSections, id: \.date) { section in
                             VStack(alignment: .leading, spacing: 8) {
                                 dateHeader(section)
-                                LazyVGrid(columns: gridColumns, spacing: 2) {
+                                LazyVGrid(columns: gridColumns, spacing: 3) {
                                     ForEach(Array(section.photos.enumerated()), id: \.element.id) { index, photo in
                                         photoCell(photo, index: index)
                                     }
                                 }
-                                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
                         }
                     }
@@ -428,7 +429,8 @@ struct AlbumDetailView: View {
     private func albumHeader(for folder: AlbumFolder) -> some View {
         ZStack(alignment: .bottomLeading) {
             if let coverId = viewModel.coverPhotoId(of: folder) {
-                PhotoThumbView(photoId: coverId)
+                PhotoThumbView(photoId: coverId, alignment: .top)
+                    .id(coverId)
             } else {
                 LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
                                startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -491,7 +493,7 @@ struct AlbumDetailView: View {
             }
         } label: {
             ZStack {
-                PhotoThumbView(photoId: photo.id)
+                PhotoThumbView(photoId: photo.id, alignment: .top)
                     .aspectRatio(1, contentMode: .fill)
                     .frame(maxWidth: .infinity)
                     .clipped()
@@ -508,10 +510,11 @@ struct AlbumDetailView: View {
                     .transition(.opacity)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .stroke(isSelected ? AppTheme.Colors.accent : .clear, lineWidth: 2.5)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(isSelected ? AppTheme.Colors.accent : AppTheme.Colors.separator,
+                            lineWidth: isSelected ? 2.5 : 0.5)
             )
             .scaleEffect(isSelected ? 0.94 : 1)
             .animation(AppTheme.Motion.snappy, value: isSelected)
@@ -603,16 +606,21 @@ private let albumSectionFmt: DateFormatter = {
     let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "yyyy年M月d日 EEEE"; return f
 }()
 
-// MARK: - 照片缩略图（从本地存储加载，带缓存）
+// MARK: - 照片缩略图（从本地存储加载，带缓存；支持裁切对齐方向）
 struct PhotoThumbView: View {
     @EnvironmentObject var viewModel: AppViewModel
     let photoId: UUID
+    var alignment: Alignment = .center
     @State private var image: UIImage?
 
     var body: some View {
         Group {
             if let image {
-                Image(uiImage: image).resizable().scaledToFill()
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+                    .clipped()
             } else {
                 Rectangle()
                     .fill(AppTheme.Colors.subtleBackground)
@@ -973,6 +981,7 @@ struct PhotoInfoSheet: View {
         Form {
             Section("照片") {
                 PhotoThumbView(photoId: photo.id)
+                    .id(photo.id)
                     .frame(height: 220)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
