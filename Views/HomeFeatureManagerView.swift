@@ -55,7 +55,7 @@ struct HomeFeatureManagerView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("功能管理")
+        .navigationTitle("首页布局")
         .navigationBarTitleDisplayMode(.inline)
         .background(AppTheme.Colors.background)
     }

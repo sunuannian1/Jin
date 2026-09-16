@@ -133,7 +133,7 @@ struct AlbumCard: View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
                 if let coverId {
-                    PhotoThumbView(photoId: coverId, alignment: .center)
+                    PhotoThumbView(photoId: coverId)
                         .id(coverId)
                         .scaledToFill()
                 } else {
@@ -429,7 +429,7 @@ struct AlbumDetailView: View {
     private func albumHeader(for folder: AlbumFolder) -> some View {
         ZStack(alignment: .bottomLeading) {
             if let coverId = viewModel.coverPhotoId(of: folder) {
-                PhotoThumbView(photoId: coverId, alignment: .center)
+                PhotoThumbView(photoId: coverId)
                     .id(coverId)
             } else {
                 LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
@@ -501,7 +501,7 @@ struct AlbumDetailView: View {
             }
         } label: {
             ZStack {
-                PhotoThumbView(photoId: photo.id, alignment: .center)
+                PhotoThumbView(photoId: photo.id)
                     .aspectRatio(1, contentMode: .fill)
                     .frame(maxWidth: .infinity)
                     .clipped()
@@ -614,21 +614,18 @@ private let albumSectionFmt: DateFormatter = {
     let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "yyyy年M月d日 EEEE"; return f
 }()
 
-// MARK: - 照片缩略图（从本地存储加载，带缓存；支持裁切对齐方向）
+// MARK: - 照片缩略图（从本地存储加载，带缓存）
+// 注意：内部禁止使用 maxHeight: .infinity —— 在 LazyVGrid 中会让竖长图按原始比例
+// 撑高、溢出方形格子，导致照片互相重叠；裁切与对齐一律交给外层 aspectRatio + clipped。
 struct PhotoThumbView: View {
     @EnvironmentObject var viewModel: AppViewModel
     let photoId: UUID
-    var alignment: Alignment = .center
     @State private var image: UIImage?
 
     var body: some View {
         Group {
             if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
-                    .clipped()
+                Image(uiImage: image).resizable().scaledToFill()
             } else {
                 Rectangle()
                     .fill(AppTheme.Colors.subtleBackground)

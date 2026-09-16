@@ -84,12 +84,6 @@ struct ProfileView: View {
                     settingsRow(icon: "square.grid.2x2.fill", title: "首页布局设置", color: .teal) {
                         HomeFeatureManagerView()
                     }
-                    Divider()
-                        .background(AppTheme.Colors.separator)
-                        .padding(.leading, 52)
-                    settingsRow(icon: "star.fill", title: "常用功能管理", color: .yellow) {
-                        HomeFeatureManagerView()
-                    }
                 }
 
                 // 数据管理
@@ -175,7 +169,7 @@ struct ProfileView: View {
                             .font(AppTheme.Fonts.body)
                             .foregroundColor(AppTheme.Colors.primaryText)
                         Spacer()
-                        Text("v1.0.0")
+                        Text("版本 1.0.0")
                             .font(AppTheme.Fonts.caption)
                             .foregroundColor(AppTheme.Colors.tertiaryText)
                     }
