@@ -311,7 +311,7 @@ struct AlbumDetailView: View {
     }
     // 与网格一致的扁平顺序，供大图浏览
     private var orderedPhotos: [AlbumPhoto] { dateSections.flatMap { $0.photos } }
-    private let gridColumns = [GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3)]
+    private let gridColumns = [GridItem(.flexible(), spacing: 4), GridItem(.flexible(), spacing: 4), GridItem(.flexible(), spacing: 4)]
 
     var body: some View {
         Group {
@@ -367,12 +367,11 @@ struct AlbumDetailView: View {
                         ForEach(dateSections, id: \.date) { section in
                             VStack(alignment: .leading, spacing: 8) {
                                 dateHeader(section)
-                                LazyVGrid(columns: gridColumns, spacing: 3) {
+                                LazyVGrid(columns: gridColumns, spacing: 4) {
                                     ForEach(Array(section.photos.enumerated()), id: \.element.id) { index, photo in
                                         photoCell(photo, index: index)
                                     }
                                 }
-                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
                         }
                     }
@@ -502,8 +501,7 @@ struct AlbumDetailView: View {
         } label: {
             ZStack {
                 PhotoThumbView(photoId: photo.id)
-                    .aspectRatio(1, contentMode: .fill)
-                    .frame(maxWidth: .infinity)
+                    .aspectRatio(1, contentMode: .fit)
                     .clipped()
                 if selectionMode {
                     ZStack {
@@ -518,11 +516,10 @@ struct AlbumDetailView: View {
                     .transition(.opacity)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(isSelected ? AppTheme.Colors.accent : AppTheme.Colors.separator,
-                            lineWidth: isSelected ? 2.5 : 0.5)
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(AppTheme.Colors.accent, lineWidth: isSelected ? 2.5 : 0)
             )
             .scaleEffect(isSelected ? 0.94 : 1)
             .animation(AppTheme.Motion.snappy, value: isSelected)
