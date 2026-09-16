@@ -311,7 +311,7 @@ struct AlbumDetailView: View {
     }
     // 与网格一致的扁平顺序，供大图浏览
     private var orderedPhotos: [AlbumPhoto] { dateSections.flatMap { $0.photos } }
-    private let gridColumns = [GridItem(.flexible(), spacing: 4), GridItem(.flexible(), spacing: 4), GridItem(.flexible(), spacing: 4)]
+    private let gridColumns = [GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3)]
 
     var body: some View {
         Group {
@@ -362,12 +362,12 @@ struct AlbumDetailView: View {
                 )
             } else {
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 16, pinnedViews: []) {
+                    LazyVStack(alignment: .leading, spacing: 14, pinnedViews: []) {
                         albumHeader(for: folder)
                         ForEach(dateSections, id: \.date) { section in
                             VStack(alignment: .leading, spacing: 8) {
                                 dateHeader(section)
-                                LazyVGrid(columns: gridColumns, spacing: 4) {
+                                LazyVGrid(columns: gridColumns, spacing: 3) {
                                     ForEach(Array(section.photos.enumerated()), id: \.element.id) { index, photo in
                                         photoCell(photo, index: index)
                                     }
@@ -375,7 +375,6 @@ struct AlbumDetailView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 12)
                     .padding(.top, 12)
                     .padding(.bottom, selectionMode ? 96 : 100)
                 }
@@ -424,7 +423,7 @@ struct AlbumDetailView: View {
         }
     }
 
-    // 相册头部横幅：封面整幅压暗 + 毛玻璃信息条（任何封面图都协调，不突兀）
+    // 相册头部横幅：全宽出血封面 + 整幅压暗 + 毛玻璃信息条（与下方照片墙同一条左右基准线）
     private func albumHeader(for folder: AlbumFolder) -> some View {
         ZStack(alignment: .bottomLeading) {
             if let coverId = viewModel.coverPhotoId(of: folder) {
@@ -462,10 +461,6 @@ struct AlbumDetailView: View {
         .frame(height: 170)
         .frame(maxWidth: .infinity)
         .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .stroke(AppTheme.Colors.separator, lineWidth: 0.5))
-        .rdShadow(AppTheme.Shadows.md)
     }
 
     private func dateHeader(_ section: (date: Date, photos: [AlbumPhoto])) -> some View {
@@ -481,11 +476,9 @@ struct AlbumDetailView: View {
                 .font(AppTheme.Fonts.caption2.weight(.medium))
                 .foregroundColor(AppTheme.Colors.secondaryText)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Capsule().fill(AppTheme.Colors.cardBackground.opacity(0.88)))
-        .overlay(Capsule().stroke(AppTheme.Colors.separator, lineWidth: 0.5))
-        .rdShadow(AppTheme.Shadows.sm)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(Capsule().fill(AppTheme.Colors.cardBackground.opacity(0.9)))
     }
 
     private func photoCell(_ photo: AlbumPhoto, index: Int) -> some View {
@@ -500,8 +493,11 @@ struct AlbumDetailView: View {
             }
         } label: {
             ZStack {
-                PhotoThumbView(photoId: photo.id)
+                // 方形骨架：Color 配合 aspectRatio 稳定锁定 1:1 尺寸，
+                // 图片作为 overlay 填充、不参与格子尺寸协商，竖图/横图都绝不会撑高或撑宽格子。
+                Color.clear
                     .aspectRatio(1, contentMode: .fit)
+                    .overlay(PhotoThumbView(photoId: photo.id))
                     .clipped()
                 if selectionMode {
                     ZStack {
@@ -516,9 +512,9 @@ struct AlbumDetailView: View {
                     .transition(.opacity)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .clipped()
             .overlay(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                Rectangle()
                     .stroke(AppTheme.Colors.accent, lineWidth: isSelected ? 2.5 : 0)
             )
             .scaleEffect(isSelected ? 0.94 : 1)
