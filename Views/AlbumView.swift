@@ -322,7 +322,7 @@ struct AlbumDetailView: View {
             }
         }
         .navigationTitle(folder?.name ?? "相册")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             if !selectionMode, folder != nil {
                 ToolbarItem(placement: .primaryAction) {
@@ -378,6 +378,7 @@ struct AlbumDetailView: View {
                     .padding(.top, 12)
                     .padding(.bottom, selectionMode ? 96 : 100)
                 }
+                .coordinateSpace(name: "albumScroll")
             }
         }
         .background(AppTheme.Colors.background)
@@ -423,44 +424,25 @@ struct AlbumDetailView: View {
         }
     }
 
-    // 相册头部横幅：全宽出血封面 + 整幅压暗 + 毛玻璃信息条（与下方照片墙同一条左右基准线）
+    // 相册封面：全宽出血、不压字，下拉时跟手拉伸（iOS 原生 hero）
     private func albumHeader(for folder: AlbumFolder) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            if let coverId = viewModel.coverPhotoId(of: folder) {
-                PhotoThumbView(photoId: coverId)
-                    .id(coverId)
-            } else {
-                LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-            }
-            // 整幅压暗：顶部轻、底部重，压住任何封面图的细节
-            LinearGradient(colors: [.black.opacity(0.16), .black.opacity(0.42), .black.opacity(0.74)],
-                           startPoint: .top, endPoint: .bottom)
-
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(folder.name)
-                        .font(.system(size: 19, weight: .bold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                    Text("\(orderedPhotos.count) 张照片")
-                        .font(AppTheme.Fonts.caption.weight(.medium))
-                        .foregroundColor(.white.opacity(0.82))
+        GeometryReader { proxy in
+            // 下拉量：内容顶部相对滚动坐标系向下偏移即为 overscroll
+            let pull = max(0, proxy.frame(in: .named("albumScroll")).minY)
+            Group {
+                if let coverId = viewModel.coverPhotoId(of: folder) {
+                    PhotoThumbView(photoId: coverId)
+                        .id(coverId)
+                } else {
+                    LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing)
                 }
-                Spacer()
-                Image(systemName: "photo.on.rectangle.angled")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
             }
-            .padding(.horizontal, 14).padding(.vertical, 11)
-            .background(.ultraThinMaterial.opacity(0.45), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(.white.opacity(0.18), lineWidth: 0.5))
-            .padding(14)
+            .frame(width: proxy.size.width, height: 220 + pull)
+            .clipped()
+            .offset(y: -pull)
         }
-        .frame(height: 170)
-        .frame(maxWidth: .infinity)
-        .clipped()
+        .frame(height: 220)
     }
 
     private func dateHeader(_ section: (date: Date, photos: [AlbumPhoto])) -> some View {
