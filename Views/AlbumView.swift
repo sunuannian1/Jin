@@ -218,6 +218,8 @@ struct AlbumFormView: View {
         Form {
             Section("相册信息") {
                 TextField("相册名称（如：秋季运动会）", text: $name)
+                    .disableAutocorrection(true)
+                    .textInputAutocapitalization(.never)
                 Toggle("置顶该相册", isOn: $isPinned)
             }
             Section("相册分类") {
@@ -362,16 +364,17 @@ struct AlbumDetailView: View {
                 )
             } else {
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 14, pinnedViews: []) {
+                    LazyVStack(alignment: .leading, spacing: 14, pinnedViews: .sectionHeaders) {
                         albumHeader(for: folder)
                         ForEach(dateSections, id: \.date) { section in
-                            VStack(alignment: .leading, spacing: 8) {
-                                dateHeader(section)
+                            Section {
                                 LazyVGrid(columns: gridColumns, spacing: 3) {
                                     ForEach(Array(section.photos.enumerated()), id: \.element.id) { index, photo in
                                         photoCell(photo, index: index)
                                     }
                                 }
+                            } header: {
+                                dateHeader(section)
                             }
                         }
                     }
@@ -424,25 +427,20 @@ struct AlbumDetailView: View {
         }
     }
 
-    // 相册封面：全宽出血、不压字，下拉时跟手拉伸（iOS 原生 hero）
+    // 相册封面：全宽出血、不压字；下拉走系统原生 overscroll，自然回弹不遮挡
     private func albumHeader(for folder: AlbumFolder) -> some View {
-        GeometryReader { proxy in
-            // 下拉量：内容顶部相对滚动坐标系向下偏移即为 overscroll
-            let pull = max(0, proxy.frame(in: .named("albumScroll")).minY)
-            Group {
-                if let coverId = viewModel.coverPhotoId(of: folder) {
-                    PhotoThumbView(photoId: coverId)
-                        .id(coverId)
-                } else {
-                    LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
-                                   startPoint: .topLeading, endPoint: .bottomTrailing)
-                }
+        Group {
+            if let coverId = viewModel.coverPhotoId(of: folder) {
+                PhotoThumbView(photoId: coverId)
+                    .id(coverId)
+            } else {
+                LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
             }
-            .frame(width: proxy.size.width, height: 220 + pull)
-            .clipped()
-            .offset(y: -pull)
         }
         .frame(height: 220)
+        .frame(maxWidth: .infinity)
+        .clipped()
     }
 
     private func dateHeader(_ section: (date: Date, photos: [AlbumPhoto])) -> some View {
@@ -458,9 +456,10 @@ struct AlbumDetailView: View {
                 .font(AppTheme.Fonts.caption2.weight(.medium))
                 .foregroundColor(AppTheme.Colors.secondaryText)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
-        .background(Capsule().fill(AppTheme.Colors.cardBackground.opacity(0.9)))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppTheme.Colors.background)
     }
 
     private func photoCell(_ photo: AlbumPhoto, index: Int) -> some View {
@@ -871,6 +870,10 @@ final class PhotoZoomVC: UIViewController, UIScrollViewDelegate {
         scrollView.showsVerticalScrollIndicator = false
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.contentInsetAdjustmentBehavior = .never
+        scrollView.bounces = false
+        scrollView.alwaysBounceHorizontal = false
+        scrollView.alwaysBounceVertical = false
+        scrollView.isScrollEnabled = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         imageView.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .black
@@ -912,11 +915,17 @@ final class PhotoZoomVC: UIViewController, UIScrollViewDelegate {
         imageView.frame = CGRect(origin: .zero, size: CGSize(width: size.width * fit, height: size.height * fit))
         scrollView.contentSize = imageView.frame.size
         centerContent()
+        updateScrollability()
+    }
+
+    private func updateScrollability() {
+        // 未放大时禁用内部滚动，把横向滑动让给 TabView 分页，避免卡在两页中间
+        scrollView.isScrollEnabled = scrollView.zoomScale > scrollView.minimumZoomScale * 1.001
     }
 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { imageView }
 
-    func scrollViewDidZoom(_ scrollView: UIScrollView) { centerContent() }
+    func scrollViewDidZoom(_ scrollView: UIScrollView) { centerContent(); updateScrollability() }
 
     private func centerContent() {
         let boundsSize = scrollView.bounds.size
