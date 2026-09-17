@@ -450,25 +450,20 @@ struct AlbumDetailView: View {
         }
     }
 
-    // 封面作为 ScrollView 背景层：固定 220，下拉时随系统 overscroll 拉伸，松手由系统回弹
-    // 相册封面：全宽出血，下拉跟手拉伸、松手随系统回弹（标准 stretchable header）
+    // 相册封面：全宽出血、固定高度，不做下拉拉伸（避免布局异常导致顶部空白/不回弹）
     private func albumHeader(for folder: AlbumFolder) -> some View {
-        GeometryReader { proxy in
-            let pull = max(0, proxy.frame(in: .named("albumScroll")).minY)
-            Group {
-                if let coverId = viewModel.coverPhotoId(of: folder) {
-                    PhotoThumbView(photoId: coverId)
-                        .id(coverId)
-                } else {
-                    LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
-                                   startPoint: .topLeading, endPoint: .bottomTrailing)
-                }
+        Group {
+            if let coverId = viewModel.coverPhotoId(of: folder) {
+                PhotoThumbView(photoId: coverId)
+                    .id(coverId)
+            } else {
+                LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
             }
-            .frame(width: proxy.size.width, height: 220 + pull)
-            .clipped()
-            .offset(y: -pull)
         }
         .frame(height: 220)
+        .frame(maxWidth: .infinity)
+        .clipped()
     }
 
     private func dateHeader(_ section: (date: Date, photos: [AlbumPhoto])) -> some View {
@@ -905,7 +900,6 @@ final class PhotoZoomVC: UIViewController, UIScrollViewDelegate {
         scrollView.alwaysBounceHorizontal = false
         scrollView.alwaysBounceVertical = false
         scrollView.isScrollEnabled = false
-        scrollView.panGestureRecognizer.isEnabled = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         imageView.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .black
@@ -951,10 +945,8 @@ final class PhotoZoomVC: UIViewController, UIScrollViewDelegate {
     }
 
     private func updateScrollability() {
-        // 未放大时禁用内部滚动与 pan 手势，把横向滑动完全交给 TabView 分页，避免卡在两页中间
-        let zoomed = scrollView.zoomScale > scrollView.minimumZoomScale * 1.001
-        scrollView.isScrollEnabled = zoomed
-        scrollView.panGestureRecognizer.isEnabled = zoomed
+        // 未放大时禁用内部滚动，把横向滑动让给 TabView 分页，避免卡在两页中间
+        scrollView.isScrollEnabled = scrollView.zoomScale > scrollView.minimumZoomScale * 1.001
     }
 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { imageView }
