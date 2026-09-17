@@ -476,7 +476,7 @@ struct AlbumDetailView: View {
             Image(systemName: "calendar")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(AppTheme.Colors.accent)
-            Text(albumSectionFmt.string(from: section.date))
+            Text(albumSectionFmt.string(from: section.date) + " " + albumTimeFmt.string(from: section.photos.first?.date ?? section.date))
                 .font(AppTheme.Fonts.caption.weight(.semibold))
                 .foregroundColor(AppTheme.Colors.primaryText)
             Spacer()
@@ -613,7 +613,10 @@ struct BrowserStart: Identifiable {
 }
 
 private let albumSectionFmt: DateFormatter = {
-    let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "yyyy年M月d日 EEEE"; return f
+    let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "yyyy年M月d日"; return f
+}()
+private let albumTimeFmt: DateFormatter = {
+    let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "HH:mm"; return f
 }()
 
 // MARK: - 照片缩略图（从本地存储加载，带缓存）
