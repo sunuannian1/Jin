@@ -388,6 +388,7 @@ struct AlbumDetailView: View {
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 14, pinnedViews: .sectionHeaders) {
+                        albumHeader(for: folder)
                         ForEach(dateSections, id: \.date) { section in
                             Section {
                                 LazyVGrid(columns: gridColumns, spacing: 3) {
@@ -400,13 +401,10 @@ struct AlbumDetailView: View {
                             }
                         }
                     }
-                    .padding(.top, 220)
+                    .padding(.top, 12)
                     .padding(.bottom, selectionMode ? 96 : 100)
                 }
                 .coordinateSpace(name: "albumScroll")
-                .background(alignment: .top) {
-                    stretchCover(folder: folder)
-                }
             }
         }
         .background(AppTheme.Colors.background)
@@ -453,8 +451,8 @@ struct AlbumDetailView: View {
     }
 
     // 封面作为 ScrollView 背景层：固定 220，下拉时随系统 overscroll 拉伸，松手由系统回弹
-    @ViewBuilder
-    private func stretchCover(folder: AlbumFolder) -> some View {
+    // 相册封面：全宽出血，下拉跟手拉伸、松手随系统回弹（标准 stretchable header）
+    private func albumHeader(for folder: AlbumFolder) -> some View {
         GeometryReader { proxy in
             let pull = max(0, proxy.frame(in: .named("albumScroll")).minY)
             Group {
@@ -904,6 +902,7 @@ final class PhotoZoomVC: UIViewController, UIScrollViewDelegate {
         scrollView.alwaysBounceHorizontal = false
         scrollView.alwaysBounceVertical = false
         scrollView.isScrollEnabled = false
+        scrollView.panGestureRecognizer.isEnabled = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         imageView.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .black
@@ -949,8 +948,10 @@ final class PhotoZoomVC: UIViewController, UIScrollViewDelegate {
     }
 
     private func updateScrollability() {
-        // 未放大时禁用内部滚动，把横向滑动让给 TabView 分页，避免卡在两页中间
-        scrollView.isScrollEnabled = scrollView.zoomScale > scrollView.minimumZoomScale * 1.001
+        // 未放大时禁用内部滚动与 pan 手势，把横向滑动完全交给 TabView 分页，避免卡在两页中间
+        let zoomed = scrollView.zoomScale > scrollView.minimumZoomScale * 1.001
+        scrollView.isScrollEnabled = zoomed
+        scrollView.panGestureRecognizer.isEnabled = zoomed
     }
 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { imageView }
