@@ -336,7 +336,7 @@ struct AlbumDetailView: View {
     }
     // 与网格一致的扁平顺序，供大图浏览
     private var orderedPhotos: [AlbumPhoto] { dateSections.flatMap { $0.photos } }
-    private let gridColumns = [GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3), GridItem(.flexible(), spacing: 3)]
+    private let gridColumns = [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)]
 
     var body: some View {
         Group {
@@ -391,7 +391,7 @@ struct AlbumDetailView: View {
                         albumHeader(for: folder)
                         ForEach(dateSections, id: \.date) { section in
                             Section {
-                                LazyVGrid(columns: gridColumns, spacing: 3) {
+                                LazyVGrid(columns: gridColumns, spacing: 6) {
                                     ForEach(Array(section.photos.enumerated()), id: \.element.id) { index, photo in
                                         photoCell(photo, index: index)
                                     }
@@ -525,6 +525,7 @@ struct AlbumDetailView: View {
             .animation(AppTheme.Motion.snappy, value: isSelected)
         }
         .buttonStyle(.plain)
+        .contentShape(Rectangle())
         .staggeredAppear(index: index, step: 0.02)
     }
 
