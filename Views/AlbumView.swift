@@ -388,7 +388,6 @@ struct AlbumDetailView: View {
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 14, pinnedViews: .sectionHeaders) {
-                        albumHeader(for: folder)
                         ForEach(dateSections, id: \.date) { section in
                             Section {
                                 LazyVGrid(columns: gridColumns, spacing: 3) {
@@ -401,10 +400,13 @@ struct AlbumDetailView: View {
                             }
                         }
                     }
-                    .padding(.top, 12)
+                    .padding(.top, 220)
                     .padding(.bottom, selectionMode ? 96 : 100)
                 }
                 .coordinateSpace(name: "albumScroll")
+                .background(alignment: .top) {
+                    stretchCover(folder: folder)
+                }
             }
         }
         .background(AppTheme.Colors.background)
@@ -450,8 +452,9 @@ struct AlbumDetailView: View {
         }
     }
 
-    // 相册封面：全宽出血，下拉时跟手向上拉伸（标准 stretchable header），松手随系统回弹
-    private func albumHeader(for folder: AlbumFolder) -> some View {
+    // 封面作为 ScrollView 背景层：固定 220，下拉时随系统 overscroll 拉伸，松手由系统回弹
+    @ViewBuilder
+    private func stretchCover(folder: AlbumFolder) -> some View {
         GeometryReader { proxy in
             let pull = max(0, proxy.frame(in: .named("albumScroll")).minY)
             Group {
