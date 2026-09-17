@@ -215,43 +215,66 @@ struct AlbumFormView: View {
     }
 
     var body: some View {
-        Form {
-            Section("相册信息") {
-                TextField("相册名称（如：秋季运动会）", text: $name)
-                    .disableAutocorrection(true)
-                    .textInputAutocapitalization(.never)
-                Toggle("置顶该相册", isOn: $isPinned)
-            }
-            Section("相册分类") {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(AlbumCategory.all, id: \.self) { cat in
-                            let active = cat == category
-                            Button {
-                                withAnimation(AppTheme.Motion.snappy) { category = cat }
-                            } label: {
-                                Text(cat)
-                                    .font(AppTheme.Fonts.caption.weight(.semibold))
-                                    .foregroundColor(active ? .white : AppTheme.Colors.secondaryText)
-                                    .padding(.horizontal, 13).padding(.vertical, 7)
-                                    .background(active ? AnyShapeStyle(AppTheme.Colors.accentGradient) : AnyShapeStyle(AppTheme.Colors.tertiaryGroupedBackground))
-                                    .clipShape(Capsule())
+        ScrollView {
+            VStack(spacing: 14) {
+                // 相册信息
+                VStack(alignment: .leading, spacing: 12) {
+                    TextField("相册名称（如：秋季运动会）", text: $name)
+                        .disableAutocorrection(true)
+                        .textInputAutocapitalization(.never)
+                    Divider()
+                    Toggle("置顶该相册", isOn: $isPinned)
+                }
+                .padding(16)
+                .background(AppTheme.Colors.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                // 分类
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("相册分类")
+                        .font(AppTheme.Fonts.subheadline.weight(.semibold))
+                        .foregroundColor(AppTheme.Colors.secondaryText)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(AlbumCategory.all, id: \.self) { cat in
+                                let active = cat == category
+                                Button {
+                                    withAnimation(AppTheme.Motion.snappy) { category = cat }
+                                } label: {
+                                    Text(cat)
+                                        .font(AppTheme.Fonts.caption.weight(.semibold))
+                                        .foregroundColor(active ? .white : AppTheme.Colors.secondaryText)
+                                        .padding(.horizontal, 13).padding(.vertical, 7)
+                                        .background(active ? AnyShapeStyle(AppTheme.Colors.accentGradient) : AnyShapeStyle(AppTheme.Colors.tertiaryGroupedBackground))
+                                        .clipShape(Capsule())
+                                }
+                                .buttonStyle(PressableButtonStyle(scale: 0.93))
                             }
-                            .buttonStyle(PressableButtonStyle(scale: 0.93))
                         }
                     }
-                    .padding(.vertical, 4)
                 }
+                .padding(16)
+                .background(AppTheme.Colors.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                // 描述
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("相册描述")
+                        .font(AppTheme.Fonts.subheadline.weight(.semibold))
+                        .foregroundColor(AppTheme.Colors.secondaryText)
+                    TextField("补充一句描述（可选）", text: $desc, axis: .vertical)
+                        .lineLimit(2...5)
+                    Text("创建后可在相册内添加照片、设置封面。")
+                        .font(AppTheme.Fonts.caption)
+                        .foregroundColor(AppTheme.Colors.tertiaryText)
+                }
+                .padding(16)
+                .background(AppTheme.Colors.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
-            Section {
-                TextField("补充一句描述（可选）", text: $desc, axis: .vertical)
-                    .lineLimit(2...5)
-            } header: {
-                Text("相册描述")
-            } footer: {
-                Text("创建后可在相册内添加照片、设置封面。")
-            }
+            .padding(16)
         }
+        .background(AppTheme.Colors.groupedBackground)
         .navigationTitle(isEditing ? "编辑相册" : "新建相册")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -427,20 +450,24 @@ struct AlbumDetailView: View {
         }
     }
 
-    // 相册封面：全宽出血、不压字；下拉走系统原生 overscroll，自然回弹不遮挡
+    // 相册封面：全宽出血，下拉时跟手向上拉伸（标准 stretchable header），松手随系统回弹
     private func albumHeader(for folder: AlbumFolder) -> some View {
-        Group {
-            if let coverId = viewModel.coverPhotoId(of: folder) {
-                PhotoThumbView(photoId: coverId)
-                    .id(coverId)
-            } else {
-                LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
+        GeometryReader { proxy in
+            let pull = max(0, proxy.frame(in: .named("albumScroll")).minY)
+            Group {
+                if let coverId = viewModel.coverPhotoId(of: folder) {
+                    PhotoThumbView(photoId: coverId)
+                        .id(coverId)
+                } else {
+                    LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing)
+                }
             }
+            .frame(width: proxy.size.width, height: 220 + pull)
+            .clipped()
+            .offset(y: -pull)
         }
         .frame(height: 220)
-        .frame(maxWidth: .infinity)
-        .clipped()
     }
 
     private func dateHeader(_ section: (date: Date, photos: [AlbumPhoto])) -> some View {
