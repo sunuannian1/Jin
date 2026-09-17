@@ -347,7 +347,7 @@ struct AlbumDetailView: View {
             }
         }
         .navigationTitle(folder?.name ?? "相册")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !selectionMode, folder != nil {
                 ToolbarItem(placement: .primaryAction) {
@@ -901,6 +901,7 @@ final class PhotoZoomVC: UIViewController, UIScrollViewDelegate {
         scrollView.alwaysBounceHorizontal = false
         scrollView.alwaysBounceVertical = false
         scrollView.isScrollEnabled = false
+        scrollView.panGestureRecognizer.isEnabled = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         imageView.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .black
@@ -946,8 +947,10 @@ final class PhotoZoomVC: UIViewController, UIScrollViewDelegate {
     }
 
     private func updateScrollability() {
-        // 未放大时禁用内部滚动，把横向滑动让给 TabView 分页，避免卡在两页中间
-        scrollView.isScrollEnabled = scrollView.zoomScale > scrollView.minimumZoomScale * 1.001
+        // 未放大时禁用内部滚动与 pan 手势，把横向滑动完全交给 TabView 分页，避免卡在两页中间
+        let zoomed = scrollView.zoomScale > scrollView.minimumZoomScale * 1.001
+        scrollView.isScrollEnabled = zoomed
+        scrollView.panGestureRecognizer.isEnabled = zoomed
     }
 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { imageView }
