@@ -615,7 +615,7 @@ class AppViewModel: ObservableObject {
     func importBackup(from url: URL) -> Bool {
         guard let raw = try? Data(contentsOf: url) else { return false }
         // 兼容 gzip 压缩包与未压缩 JSON
-        let data = (raw as NSData).decompressed(using: .zlib) ?? raw
+        let data = (NSData(data: raw).decompressed(using: .zlib)) ?? raw
         guard let backup = try? JSONDecoder().decode(AllDataBackup.self, from: data) else { return false }
         clearAllData()
         dataManager.importPhotoFiles(backup.photoFiles)

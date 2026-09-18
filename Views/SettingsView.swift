@@ -93,7 +93,7 @@ struct SettingsView: View {
         guard let raw = viewModel.makeBackupData() else {
             message = "没有可导出的数据"; showMessage = true; return
         }
-        let compressed = (raw as NSData).compressed(using: .zlib) ?? raw
+        let compressed = NSData(data: raw).compressed(using: .zlib) ?? raw
         let fmt = DateFormatter(); fmt.locale = Locale(identifier: "zh_CN"); fmt.dateFormat = "yyyyMMdd-HHmm"
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("班主任备份-\(fmt.string(from: Date())).backup")
