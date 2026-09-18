@@ -1,11 +1,11 @@
-﻿import Foundation
+import Foundation
 
 // MARK: - 班级信息
 struct ClassInfo: Codable {
-    var className: String      // 班级名，如"高一（2）班"
-    var grade: String          // 年级，如"高一"
-    var headTeacher: String    // 班主任姓名
-    var subjects: [String]     // 开设科目
+    var className: String
+    var grade: String
+    var headTeacher: String
+    var subjects: [String]
 
     static let `default` = ClassInfo(
         className: "",
@@ -15,28 +15,40 @@ struct ClassInfo: Codable {
     )
 }
 
+// MARK: - 监护人
+struct Guardian: Identifiable, Codable, Equatable, Hashable {
+    var id: UUID
+    var relation: String
+    var name: String
+    var phone: String
+    init(id: UUID = UUID(), relation: String, name: String, phone: String) {
+        self.id = id; self.relation = relation; self.name = name; self.phone = phone
+    }
+}
+
 // MARK: - 学生
 struct Student: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
-    var studentNumber: String      // 学号
+    var studentNumber: String
     var gender: Gender
-    var phone: String              // 学生电话
-    var fatherName: String         // 父亲姓名
-    var fatherPhone: String        // 父亲电话
-    var motherName: String         // 母亲姓名
-    var motherPhone: String        // 母亲电话
-    var ethnicity: String          // 民族
-    var birthDate: String          // 出生年月
-    var idCardNumber: String       // 身份证号
-    var address: String            // 家庭住址
-    var groupNumber: Int           // 小组编号（1-4）
-    var seatRow: Int               // 座位行（0=未分配）
-    var seatCol: Int               // 座位列（0=未分配）
-    var dormitory: String          // 宿舍号
-    var latitude: Double?          // 家庭住址纬度（解析后保存）
-    var longitude: Double?         // 家庭住址经度（解析后保存）
-    var notes: String              // 备注
+    var phone: String
+    var fatherName: String
+    var fatherPhone: String
+    var motherName: String
+    var motherPhone: String
+    var guardians: [Guardian]
+    var ethnicity: String
+    var birthDate: String
+    var idCardNumber: String
+    var address: String
+    var groupNumber: Int
+    var seatRow: Int
+    var seatCol: Int
+    var dormitory: String
+    var latitude: Double?
+    var longitude: Double?
+    var notes: String
 
     enum Gender: String, Codable, CaseIterable {
         case male = "男"
@@ -46,6 +58,7 @@ struct Student: Identifiable, Codable, Equatable {
     init(id: UUID = UUID(), name: String, studentNumber: String = "", gender: Gender = .male,
          phone: String = "", fatherName: String = "", fatherPhone: String = "",
          motherName: String = "", motherPhone: String = "",
+         guardians: [Guardian] = [],
          ethnicity: String = "汉", birthDate: String = "", idCardNumber: String = "",
          address: String = "", groupNumber: Int = 1, seatRow: Int = 0, seatCol: Int = 0,
          dormitory: String = "", latitude: Double? = nil, longitude: Double? = nil, notes: String = "") {
@@ -58,6 +71,7 @@ struct Student: Identifiable, Codable, Equatable {
         self.fatherPhone = fatherPhone
         self.motherName = motherName
         self.motherPhone = motherPhone
+        self.guardians = guardians
         self.ethnicity = ethnicity
         self.birthDate = birthDate
         self.idCardNumber = idCardNumber
@@ -70,16 +84,58 @@ struct Student: Identifiable, Codable, Equatable {
         self.longitude = longitude
         self.notes = notes
     }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, studentNumber, gender, phone, fatherName, fatherPhone,
+             motherName, motherPhone, guardians, ethnicity, birthDate, idCardNumber,
+             address, groupNumber, seatRow, seatCol, dormitory, latitude, longitude, notes
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        studentNumber = try c.decodeIfPresent(String.self, forKey: .studentNumber) ?? ""
+        gender = try c.decodeIfPresent(Gender.self, forKey: .gender) ?? .male
+        phone = try c.decodeIfPresent(String.self, forKey: .phone) ?? ""
+        fatherName = try c.decodeIfPresent(String.self, forKey: .fatherName) ?? ""
+        fatherPhone = try c.decodeIfPresent(String.self, forKey: .fatherPhone) ?? ""
+        motherName = try c.decodeIfPresent(String.self, forKey: .motherName) ?? ""
+        motherPhone = try c.decodeIfPresent(String.self, forKey: .motherPhone) ?? ""
+        if let g = try c.decodeIfPresent([Guardian].self, forKey: .guardians), !g.isEmpty {
+            guardians = g
+        } else {
+            var gs: [Guardian] = []
+            if !fatherName.isEmpty || !fatherPhone.isEmpty {
+                gs.append(Guardian(relation: "爸爸", name: fatherName, phone: fatherPhone))
+            }
+            if !motherName.isEmpty || !motherPhone.isEmpty {
+                gs.append(Guardian(relation: "妈妈", name: motherName, phone: motherPhone))
+            }
+            guardians = gs
+        }
+        ethnicity = try c.decodeIfPresent(String.self, forKey: .ethnicity) ?? "汉"
+        birthDate = try c.decodeIfPresent(String.self, forKey: .birthDate) ?? ""
+        idCardNumber = try c.decodeIfPresent(String.self, forKey: .idCardNumber) ?? ""
+        address = try c.decodeIfPresent(String.self, forKey: .address) ?? ""
+        groupNumber = try c.decodeIfPresent(Int.self, forKey: .groupNumber) ?? 1
+        seatRow = try c.decodeIfPresent(Int.self, forKey: .seatRow) ?? 0
+        seatCol = try c.decodeIfPresent(Int.self, forKey: .seatCol) ?? 0
+        dormitory = try c.decodeIfPresent(String.self, forKey: .dormitory) ?? ""
+        latitude = try c.decodeIfPresent(Double.self, forKey: .latitude)
+        longitude = try c.decodeIfPresent(Double.self, forKey: .longitude)
+        notes = try c.decodeIfPresent(String.self, forKey: .notes) ?? ""
+    }
 }
 
 // MARK: - 考试
 struct Exam: Identifiable, Codable {
     let id: UUID
-    var name: String              // 考试名称，如"第一次月考"
+    var name: String
     var type: ExamType
     var date: Date
-    var subjects: [String]        // 考试科目
-    var semesterId: UUID?         // 关联学期
+    var subjects: [String]
+    var semesterId: UUID?
 
     enum ExamType: String, Codable, CaseIterable {
         case unitTest = "单元测"
@@ -104,9 +160,9 @@ struct ScoreRecord: Identifiable, Codable {
     let id: UUID
     var studentId: UUID
     var subject: String
-    var examId: UUID              // 关联考试
-    var score: Double             // 分数
-    var fullScore: Double         // 满分（默认100）
+    var examId: UUID
+    var score: Double
+    var fullScore: Double
 
     init(id: UUID = UUID(), studentId: UUID, subject: String, examId: UUID,
          score: Double, fullScore: Double = 100) {
@@ -123,8 +179,8 @@ struct ScoreRecord: Identifiable, Codable {
 struct Course: Identifiable, Codable {
     let id: UUID
     var subject: String
-    var dayOfWeek: Int            // 1=周一 ... 7=周日
-    var period: Int               // 第几节
+    var dayOfWeek: Int
+    var period: Int
     var classroom: String
     var teacher: String
 
@@ -138,7 +194,6 @@ struct Course: Identifiable, Codable {
         self.teacher = teacher
     }
 
-    // 根据节次返回时间字符串
     var timeString: String {
         let times = [
             1: "08:00-08:45",
@@ -157,8 +212,8 @@ struct Course: Identifiable, Codable {
 // MARK: - 值日组
 struct DutyGroup: Identifiable, Codable {
     let id: UUID
-    var groupNumber: Int          // 组号（1-6）
-    var studentIds: [UUID]        // 成员
+    var groupNumber: Int
+    var studentIds: [UUID]
 
     init(id: UUID = UUID(), groupNumber: Int, studentIds: [UUID] = []) {
         self.id = id

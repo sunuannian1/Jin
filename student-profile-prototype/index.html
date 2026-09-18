@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学生档案 · iOS 原生交互原型</title>
+<style>
+  :root{
+    --bg:#F2F2F7; --card:#FFFFFF; --sep:#E5E5EA;
+    --t1:#1C1C1E; --t2:#8E8E93; --t3:#C7C7CC;
+    --accent:#C2410C; --accentSoft:rgba(194,65,12,.10); --accentGrad:linear-gradient(135deg,#E8590C,#C2410C);
+    --green:#28A745; --red:#FF3B30;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
+    background:radial-gradient(1200px 800px at 50% -10%,#3a3a44,#1c1c22);
+    display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;color:var(--t1);
+  }
+  .stage{display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;justify-content:center;}
+  .phone{
+    width:390px;height:844px;background:var(--bg);border-radius:52px;position:relative;
+    box-shadow:0 40px 90px rgba(0,0,0,.55),0 0 0 12px #0b0b0d,0 0 0 13px #2a2a2e;
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:124px;height:30px;background:#000;border-radius:18px;z-index:50;}
+  .caption{width:340px;color:#e8e8ee;}
+  .caption h1{font-size:20px;font-weight:700;margin-bottom:10px;}
+  .caption p{font-size:13px;line-height:1.7;color:#b9b9c4;margin-bottom:14px;}
+  .caption ul{list-style:none;font-size:12.5px;line-height:1.9;color:#cfcfda;}
+  .caption ul b{color:#fff;}
+  .tag{display:inline-block;font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);margin:2px 4px 2px 0;color:#ddd;}
+
+  .navbar{padding:52px 16px 10px;background:rgba(242,242,247,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid rgba(0,0,0,.08);flex:none;}
+  .navrow{display:flex;align-items:center;justify-content:space-between;min-height:26px;}
+  .navbtn{font-size:16px;color:var(--accent);background:none;border:none;cursor:pointer;padding:6px 8px;font-family:inherit;}
+  .navtitle{font-size:17px;font-weight:600;}
+
+  .scroll{flex:1;overflow-y:auto;padding:18px 16px 30px;}
+  .scroll::-webkit-scrollbar{width:0;}
+
+  /* 视图切换 */
+  .view{display:none;}
+  .view.active{display:block;animation:fade .28s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  /* ===== 浏览态：头卡 ===== */
+  .profile-hero{display:flex;flex-direction:column;align-items:center;padding:22px 18px 24px;margin-bottom:18px;background:var(--card);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .avatar{width:84px;height:84px;border-radius:50%;background:var(--accentGrad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:36px;font-weight:700;box-shadow:0 8px 20px rgba(194,65,12,.35);}
+  .profile-hero h2{font-size:24px;font-weight:700;margin-top:12px;}
+  .chips-row{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;justify-content:center;}
+  .badge{font-size:12px;font-weight:600;color:var(--accent);background:var(--accentSoft);padding:4px 11px;border-radius:999px;}
+  .chip-pill{font-size:12.5px;color:var(--t2);background:var(--bg);padding:4px 11px;border-radius:999px;}
+
+  .group{margin-bottom:22px;}
+  .glabel{font-size:13px;color:var(--t2);padding:0 8px 7px;letter-spacing:.3px;}
+  .card{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+
+  /* 浏览态只读行 */
+  .kv{display:flex;align-items:center;min-height:48px;padding:11px 14px;border-bottom:.5px solid var(--sep);gap:10px;}
+  .kv:last-child{border-bottom:none;}
+  .kv .k{font-size:15px;width:82px;flex:none;color:var(--t1);}
+  .kv .v{flex:1;text-align:right;font-size:15px;color:var(--t2);word-break:break-all;}
+  .kv .v strong{color:var(--t1);font-weight:500;}
+  .kv .v.accent{color:var(--accent);font-weight:600;}
+
+  .rel-block{padding:12px 14px;border-bottom:.5px solid var(--sep);}
+  .rel-block:last-child{border-bottom:none;}
+  .rel-block .rt{display:inline-block;font-size:12.5px;font-weight:600;color:var(--accent);background:var(--accentSoft);padding:4px 10px;border-radius:8px;margin-bottom:8px;}
+  .rel-block .rl{font-size:15px;font-weight:600;color:var(--t1);}
+  .rel-block .rp{font-size:14px;color:var(--t2);margin-top:2px;}
+
+  /* 编辑态表单 */
+  .row{display:flex;align-items:center;min-height:48px;padding:10px 14px;border-bottom:.5px solid var(--sep);gap:10px;}
+  .row:last-child{border-bottom:none;}
+  .row .lab{font-size:15px;width:76px;flex:none;color:var(--t1);}
+  .row .ctl{flex:1;display:flex;justify-content:flex-end;align-items:center;min-width:0;}
+  input[type=text],input[type=date],textarea,select{
+    border:none;outline:none;background:transparent;font-size:16px;color:var(--t1);text-align:right;width:100%;font-family:inherit;
+  }
+  input::placeholder{color:var(--t3);}
+  textarea{text-align:left;resize:none;line-height:1.5;min-height:56px;}
+  input.invalid{color:var(--red);}
+  .err{font-size:11px;color:var(--red);text-align:right;margin-left:6px;display:none;}
+  .row.errored .err{display:block;}
+
+  .seg{display:flex;background:rgba(120,120,128,.12);border-radius:9px;padding:2px;}
+  .seg button{border:none;background:transparent;font-size:13px;padding:5px 16px;border-radius:7px;cursor:pointer;color:var(--t1);font-family:inherit;transition:all .18s;}
+  .seg button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15);font-weight:600;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end;}
+  .chip{font-size:13px;padding:6px 13px;border-radius:999px;background:rgba(120,120,128,.1);color:var(--t2);cursor:pointer;border:none;font-family:inherit;transition:all .16s;}
+  .chip.on{background:var(--accent);color:#fff;font-weight:600;box-shadow:0 3px 8px rgba(194,65,12,.3);}
+
+  .rel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 4px;}
+  .rel-item{padding:12px 14px;border-bottom:.5px solid var(--sep);animation:fade .25s ease;}
+  .rel-item:last-child{border-bottom:none;}
+  .rel-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .rel-role{font-size:12.5px;font-weight:600;color:var(--accent);background:var(--accentSoft);padding:4px 10px;border-radius:8px;border:none;font-family:inherit;cursor:pointer;}
+  .rel-del{margin-left:auto;width:26px;height:26px;border-radius:50%;border:none;background:rgba(255,59,48,.12);color:var(--red);font-size:15px;cursor:pointer;line-height:1;}
+  .rel-fields{display:flex;flex-direction:column;gap:6px;}
+  .rel-fields input{text-align:left;font-size:14px;padding:6px 10px;background:var(--bg);border-radius:8px;}
+  .add-rel{margin:10px 14px 14px;display:flex;align-items:center;gap:8px;color:var(--accent);font-size:15px;cursor:pointer;background:none;border:none;font-family:inherit;}
+  .add-rel .plus{width:22px;height:22px;border-radius:50%;background:var(--accentSoft);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;}
+
+  .save{margin:26px 4px 8px;width:calc(100% - 8px);padding:15px;border:none;border-radius:14px;background:var(--accentGrad);color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 8px 20px rgba(194,65,12,.35);transition:transform .12s;}
+  .save:active{transform:scale(.97);}
+  .callbtn{margin:26px 4px 10px;width:calc(100% - 8px);padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#d1fae5,#cfe3d6);color:#B85A3A;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .editbig{margin:0 4px 8px;width:calc(100% - 8px);padding:14px;border-radius:14px;background:var(--card);color:var(--accent);font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+  .hint{font-size:12px;color:var(--t3);text-align:center;margin-top:10px;}
+
+  .toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%) translateY(20px);background:rgba(28,28,30,.92);color:#fff;padding:11px 20px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:all .3s;z-index:60;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="caption">
+    <h1>学生档案 · iOS 原生交互</h1>
+    <p>标准 iOS「详情 → 编辑 → 保存回详情」流程：进来是只读浏览页，点「编辑」进入表单；保存后<b style="color:#fff">自动回到浏览态</b>并展示刚填的内容，而不是停在编辑模式。</p>
+    <ul>
+      <li><b>浏览态</b>：头卡 + 分组只读信息，右上角「编辑」</li>
+      <li><b>编辑态</b>：可改全部字段、家长联系人增删</li>
+      <li><b>年龄</b>：由出生年月自动推算</li>
+      <li>落 SwiftUI 时：浏览态 = 只读 DetailView，编辑态 = Sheet/Push 的 Form</li>
+    </ul>
+    <div><span class="tag">SwiftUI 原生</span><span class="tag">iOS 16+</span><span class="tag">详情/编辑双态</span></div>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="navbar">
+      <div class="navrow">
+        <span class="navbtn" id="navLeft" onclick="navLeft()"></span>
+        <div class="navtitle" id="navTitle">学生档案</div>
+        <span class="navbtn" id="navRight" onclick="navRight()"></span>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <!-- ===== 浏览态 ===== -->
+      <div class="view" id="viewBrowse">
+        <div class="profile-hero">
+          <div class="avatar" id="bAvatar">张</div>
+          <h2 id="bName">张梓涵</h2>
+          <div class="chips-row">
+            <span class="badge" id="bSeq">No.202501</span>
+            <span class="chip-pill" id="bMeta">汉族 · 女 · 13 岁</span>
+            <span class="chip-pill" id="bSeat">座位 3 排 5 号</span>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">基本信息</div>
+          <div class="card">
+            <div class="kv"><span class="k">出生年月</span><span class="v" id="bBirth">2013-05-12</span></div>
+            <div class="kv"><span class="k">年龄</span><span class="v accent" id="bAge">13 岁</span></div>
+            <div class="kv"><span class="k">身份证号</span><span class="v" id="bIdno">110101201305120024</span></div>
+            <div class="kv"><span class="k">职务</span><span class="v" id="bDuty">学习委员</span></div>
+            <div class="kv"><span class="k">值日小组</span><span class="v" id="bDutyGroup">第 2 组</span></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">家长 / 紧急联系人</div>
+          <div class="card" id="bRels"></div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">家庭住址</div>
+          <div class="card">
+            <div class="kv" style="align-items:flex-start;">
+              <span class="k">地址</span>
+              <span class="v" id="bAddress" style="text-align:right;">河南省南阳市卧龙区文化路 88 号院 3 号楼 2 单元 501</span>
+            </div>
+            <div class="kv" onclick="toast('演示：唤起系统地图导航')" style="cursor:pointer;">
+              <span class="k">定位</span>
+              <span class="v" id="bLoc" style="text-align:right;color:var(--green);">已定位 · 去导航 ›</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">私密备注</div>
+          <div class="card">
+            <div style="padding:14px;" id="bRemark">性格内向，数学偏弱……</div>
+          </div>
+        </div>
+
+        <button class="callbtn" onclick="callParent()">拨打家长电话</button>
+        <button class="editbig" onclick="enterEdit()">编辑学生档案</button>
+      </div>
+
+      <!-- ===== 编辑态 ===== -->
+      <div class="view" id="viewEdit">
+        <div class="group">
+          <div class="glabel">基本信息</div>
+          <div class="card">
+            <div class="row">
+              <span class="lab">姓名</span>
+              <div class="ctl"><input type="text" id="name" value="张梓涵" placeholder="请输入姓名"></div>
+            </div>
+            <div class="row">
+              <span class="lab">性别</span>
+              <div class="ctl">
+                <div class="seg" id="genderSeg">
+                  <button data-v="女" class="on" onclick="setGender('女',this)">女</button>
+                  <button data-v="男" onclick="setGender('男',this)">男</button>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <span class="lab">民族</span>
+              <div class="ctl">
+                <div class="chips" id="nationChips">
+                  <button class="chip on" data-v="汉族" onclick="setNation('汉族',this)">汉族</button>
+                  <button class="chip" data-v="满族" onclick="setNation('满族',this)">满族</button>
+                  <button class="chip" data-v="回族" onclick="setNation('回族',this)">回族</button>
+                  <button class="chip" data-v="蒙古族" onclick="setNation('蒙古族',this)">蒙古族</button>
+                  <button class="chip" data-v="壮族" onclick="setNation('壮族',this)">壮族</button>
+                  <button class="chip" data-v="其他" onclick="setNation('其他',this)">其他</button>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <span class="lab">出生年月</span>
+              <div class="ctl"><input type="date" id="birth" value="2013-05-12"></div>
+            </div>
+            <div class="row">
+              <span class="lab">年龄</span>
+              <div class="ctl"><span class="v" style="font-size:15px;color:var(--t2);">自动 · <b id="ageVal" style="color:var(--accent);">13</b> 岁</span></div>
+            </div>
+            <div class="row" id="idrow">
+              <span class="lab">身份证号</span>
+              <div class="ctl"><input type="text" id="idno" value="110101201305120024" maxlength="18" placeholder="18 位"><span class="err">位数不足</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="rel-head"><div class="glabel" style="padding:0;">家长 / 紧急联系人</div></div>
+          <div class="card" id="relList"></div>
+          <button class="add-rel" onclick="addRel()"><span class="plus">+</span> 添加一位联系人</button>
+        </div>
+
+        <div class="group">
+          <div class="glabel">家庭住址</div>
+          <div class="card">
+            <div class="row" style="align-items:flex-start;">
+              <div class="ctl" style="text-align:left;"><textarea id="address" placeholder="请输入详细家庭住址">河南省南阳市卧龙区文化路 88 号院 3 号楼 2 单元 501</textarea></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="save" onclick="save()">保存</button>
+        <div class="hint">保存后将返回浏览页展示内容</div>
+      </div>
+    </div>
+
+    <div class="toast" id="toastEl"></div>
+  </div>
+</div>
+
+<script>
+const state = {
+  name:"张梓涵", gender:"女", nation:"汉族",
+  birth:"2013-05-12", idno:"110101201305120024",
+  address:"河南省南阳市卧龙区文化路 88 号院 3 号楼 2 单元 501",
+  seq:"202501", seat:"3 排 5 号", duty:"学习委员", dutyGroup:2, located:true,
+  remark:"性格内向，数学偏弱，上课回答问题需多鼓励。",
+  rels:[
+    {role:"爸爸", name:"张建国", phone:"13803771234"},
+    {role:"妈妈", name:"李梅",   phone:"13903775678"},
+  ]
+};
+const roles = ["爸爸","妈妈","爷爷","奶奶","外公","外婆","其他"];
+let view = "browse";
+
+function calcAge(b){
+  if(!b) return 0;
+  const bd=new Date(b), now=new Date();
+  let a=now.getFullYear()-bd.getFullYear();
+  const m=now.getMonth()-bd.getMonth();
+  if(m<0||(m===0&&now.getDate()<bd.getDate())) a--;
+  return a<0?0:a;
+}
+function ageNow(){ return calcAge(state.birth); }
+
+/* ---- 浏览态渲染 ---- */
+function renderBrowse(){
+  document.getElementById("bAvatar").textContent = state.name?state.name[0]:"?";
+  document.getElementById("bName").textContent = state.name||"未命名";
+  document.getElementById("bSeq").textContent = "No."+state.seq;
+  document.getElementById("bMeta").textContent = `${state.nation} · ${state.gender} · ${ageNow()} 岁`;
+  document.getElementById("bBirth").textContent = state.birth||"未填写";
+  document.getElementById("bAge").textContent = ageNow()+" 岁";
+  document.getElementById("bIdno").textContent = state.idno||"未填写";
+  document.getElementById("bAddress").textContent = state.address||"未填写";
+  document.getElementById("bSeat").textContent = "座位 " + state.seat;
+  document.getElementById("bDuty").textContent = state.duty||"无";
+  document.getElementById("bDutyGroup").textContent = "第 " + state.dutyGroup + " 组";
+  document.getElementById("bRemark").textContent = state.remark||"无";
+  const locEl = document.getElementById("bLoc");
+  locEl.textContent = state.located ? "已定位 · 去导航 ›" : "未定位 · 去定位 ›";
+  locEl.style.color = state.located ? "var(--green)" : "#f97316";
+  const box = document.getElementById("bRels");
+  box.innerHTML = state.rels.length? "" : '<div class="rel-block"><div class="rl" style="color:var(--t2);font-weight:400;">暂无联系人</div></div>';
+  state.rels.forEach(r=>{
+    const d=document.createElement("div"); d.className="rel-block";
+    d.innerHTML=`<span class="rt">${r.role}</span><div class="rl">${r.name||"（未填姓名）"}</div><div class="rp">${r.phone||"（未填电话）"}</div>`;
+    box.appendChild(d);
+  });
+}
+
+/* ---- 编辑态回填 ---- */
+function fillEdit(){
+  document.getElementById("name").value = state.name;
+  document.getElementById("birth").value = state.birth;
+  document.getElementById("idno").value = state.idno;
+  document.getElementById("address").value = state.address;
+  document.querySelectorAll("#genderSeg button").forEach(b=>b.classList.toggle("on", b.dataset.v===state.gender));
+  document.querySelectorAll("#nationChips .chip").forEach(b=>b.classList.toggle("on", b.dataset.v===state.nation));
+  document.getElementById("ageVal").textContent = ageNow();
+}
+
+function setView(v){
+  view = v;
+  document.getElementById("viewBrowse").classList.toggle("active", v==="browse");
+  document.getElementById("viewEdit").classList.toggle("active", v==="edit");
+  const L=document.getElementById("navLeft"), R=document.getElementById("navRight"), T=document.getElementById("navTitle");
+  if(v==="browse"){
+    T.textContent="学生档案"; L.textContent="";
+    R.textContent="编辑"; R.style.fontWeight="600";
+  }else{
+    T.textContent="编辑学生"; L.textContent="取消";
+    R.textContent="保存"; R.style.fontWeight="600";
+  }
+}
+function navLeft(){ if(view==="edit") setView("browse"); }
+function navRight(){ if(view==="browse"){ enterEdit(); } else { save(); } }
+function enterEdit(){ fillEdit(); renderRels(); setView("edit"); }
+
+/* ---- 编辑交互 ---- */
+function setGender(g, el){ state.gender=g; document.querySelectorAll("#genderSeg button").forEach(b=>b.classList.remove("on")); el.classList.add("on"); }
+function setNation(n, el){ state.nation=n; document.querySelectorAll("#nationChips .chip").forEach(b=>b.classList.remove("on")); el.classList.add("on"); }
+function bind(){
+  document.getElementById("name").oninput=e=>state.name=e.target.value;
+  document.getElementById("birth").oninput=e=>{ state.birth=e.target.value; document.getElementById("ageVal").textContent=ageNow(); };
+  document.getElementById("idno").oninput=e=>{ state.idno=e.target.value; e.target.classList.toggle("invalid", e.target.value.length>0&&e.target.value.length!==18); document.getElementById("idrow").classList.toggle("errored", e.target.value.length>0&&e.target.value.length!==18); };
+  document.getElementById("address").oninput=e=>state.address=e.target.value;
+}
+function renderRels(){
+  const box=document.getElementById("relList"); box.innerHTML="";
+  state.rels.forEach((r,i)=>{
+    const item=document.createElement("div"); item.className="rel-item";
+    const opts=roles.map(role=>`<option ${role===r.role?"selected":""}>${role}</option>`).join("");
+    item.innerHTML=`<div class="rel-top"><select class="rel-role" data-i="${i}">${opts}</select><button class="rel-del" data-i="${i}">×</button></div>
+      <div class="rel-fields"><input type="text" placeholder="姓名" data-i="${i}" data-k="name" value="${r.name}"><input type="text" placeholder="联系电话" data-i="${i}" data-k="phone" value="${r.phone}"></div>`;
+    box.appendChild(item);
+  });
+  box.querySelectorAll(".rel-role").forEach(s=>s.onchange=e=>state.rels[+e.target.dataset.i].role=e.target.value);
+  box.querySelectorAll(".rel-del").forEach(b=>b.onclick=e=>{ state.rels.splice(+e.target.dataset.i,1); renderRels(); });
+  box.querySelectorAll("input[data-k]").forEach(inp=>inp.oninput=e=>state.rels[+e.target.dataset.i][e.target.dataset.k]=e.target.value);
+}
+function addRel(){ state.rels.push({role:"其他",name:"",phone:""}); renderRels(); }
+function toast(msg){ const t=document.getElementById("toastEl"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1500); }
+function callParent(){
+  const first = state.rels.find(r=>r.phone);
+  if(!first){ toast("暂无家长电话"); return; }
+  toast("正在拨打 " + first.role + " " + first.name + " · " + first.phone);
+}
+
+function save(){
+  if(!state.name.trim()){ toast("请填写姓名"); return; }
+  if(state.idno && state.idno.length!==18){ toast("身份证号需 18 位"); return; }
+  for(let i=0;i<state.rels.length;i++){ const p=state.rels[i].phone; if(p && !/^1\d{10}$/.test(p)){ toast("第"+(i+1)+"位联系人电话格式不对"); return; } }
+  toast("已保存");
+  renderBrowse();
+  setTimeout(()=>setView("browse"), 250);
+}
+
+bind(); renderBrowse(); setView("browse");
+</script>
+</body>
+</html>

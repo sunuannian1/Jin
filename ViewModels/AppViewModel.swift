@@ -862,13 +862,23 @@ extension AppViewModel {
         let ciBirth = col("出生")
         let ciID = col("身份证")
         let ciNum = col("学号") ?? col("序号") ?? col("座号")
-        let ciFatherName = headers.firstIndex { $0.contains("爸爸") && $0.contains("姓名") } ?? headers.firstIndex { $0.contains("父亲") && $0.contains("姓名") }
-        let ciFatherPhone = headers.firstIndex { $0.contains("爸爸") && $0.contains("电话") } ?? headers.firstIndex { $0.contains("父亲") && $0.contains("电话") }
-        let ciMotherName = headers.firstIndex { $0.contains("妈妈") && $0.contains("姓名") } ?? headers.firstIndex { $0.contains("母亲") && $0.contains("姓名") }
-        let ciMotherPhone = headers.firstIndex { $0.contains("妈妈") && $0.contains("电话") } ?? headers.firstIndex { $0.contains("母亲") && $0.contains("电话") }
         let ciAddr = col("住址") ?? col("地址")
         let ciGroup = col("小组")
         let ciDorm = col("宿舍")
+
+        // 监护人列：联系人1称呼/联系人1姓名/联系人1电话，最多3个
+        var guardianCols: [(rel: Int?, name: Int?, phone: Int?)] = []
+        for n in 1...3 {
+            let rel = headers.firstIndex { $0 == "联系人\(n)称呼" || $0 == "联系\(n)称呼" }
+            let nm = headers.firstIndex { $0 == "联系人\(n)姓名" || $0 == "联系\(n)姓名" }
+            let ph = headers.firstIndex { $0 == "联系人\(n)电话" || $0 == "联系\(n)电话" }
+            if nm != nil || ph != nil { guardianCols.append((rel, nm, ph)) }
+        }
+        // 兼容旧表头：爸爸/妈妈
+        let oldDadName = headers.firstIndex { $0.contains("爸爸") && $0.contains("姓名") }
+        let oldDadPhone = headers.firstIndex { $0.contains("爸爸") && $0.contains("电话") }
+        let oldMomName = headers.firstIndex { $0.contains("妈妈") && $0.contains("姓名") }
+        let oldMomPhone = headers.firstIndex { $0.contains("妈妈") && $0.contains("电话") }
 
         var count = 0
         for r in rows.dropFirst() {
@@ -881,10 +891,25 @@ extension AppViewModel {
             if let n = Int(number) { number = String(format: "%02d", n) }
             let gender: Student.Gender = (cell(ciGender).contains("女")) ? .female : .male
             let group = Int(cell(ciGroup)) ?? 1
+            // 组装监护人列表
+            var guardians: [Guardian] = []
+            for gc in guardianCols {
+                let nm = cell(gc.name), ph = cell(gc.phone)
+                if nm.isEmpty && ph.isEmpty { continue }
+                let rel = cell(gc.rel).isEmpty ? "监护人" : cell(gc.rel)
+                guardians.append(Guardian(relation: rel, name: nm, phone: ph))
+            }
+            if guardians.isEmpty {
+                let dn = cell(oldDadName), dp = cell(oldDadPhone)
+                if !dn.isEmpty || !dp.isEmpty { guardians.append(Guardian(relation: "爸爸", name: dn, phone: dp)) }
+                let mn = cell(oldMomName), mp = cell(oldMomPhone)
+                if !mn.isEmpty || !mp.isEmpty { guardians.append(Guardian(relation: "妈妈", name: mn, phone: mp)) }
+            }
             let s = Student(
                 name: name, studentNumber: number, gender: gender,
-                fatherName: cell(ciFatherName), fatherPhone: cell(ciFatherPhone),
-                motherName: cell(ciMotherName), motherPhone: cell(ciMotherPhone),
+                fatherName: cell(oldDadName), fatherPhone: cell(oldDadPhone),
+                motherName: cell(oldMomName), motherPhone: cell(oldMomPhone),
+                guardians: guardians,
                 ethnicity: cell(ciEthnic).isEmpty ? "汉" : cell(ciEthnic),
                 birthDate: cell(ciBirth), idCardNumber: cell(ciID),
                 address: cell(ciAddr), groupNumber: group, dormitory: cell(ciDorm)
