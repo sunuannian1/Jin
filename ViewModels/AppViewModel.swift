@@ -873,7 +873,8 @@ extension AppViewModel {
         var count = 0
         for r in rows.dropFirst() {
             func cell(_ i: Int?) -> String { guard let i, i < r.count else { return "" }; return r[i].trimmingCharacters(in: .whitespaces) }
-            guard let ciName, let name = ciName < r.count ? r[ciName].trimmingCharacters(in: .whitespaces) : "", !name.isEmpty else { continue }
+            let name = cell(ciName)
+            guard !name.isEmpty else { continue }
             // 学号：CSV 有就用，没有按行号 01、02...
             var number = cell(ciNum)
             if number.isEmpty { number = String(format: "%02d", count + 1) }
