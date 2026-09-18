@@ -93,7 +93,7 @@ struct SettingsView: View {
         guard let raw = viewModel.makeBackupData() else {
             message = "没有可导出的数据"; showMessage = true; return
         }
-        let compressedData = NSData(data: raw).compressed(using: .zlib) as Data?
+        let compressedData = try? NSData(data: raw).compressed(using: .zlib) as Data?
         let compressed = compressedData ?? raw
         let fmt = DateFormatter(); fmt.locale = Locale(identifier: "zh_CN"); fmt.dateFormat = "yyyyMMdd-HHmm"
         let url = FileManager.default.temporaryDirectory
