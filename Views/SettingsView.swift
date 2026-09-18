@@ -39,7 +39,7 @@ struct SettingsView: View {
                     .disabled(newSubject.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
-            Section("数据备份") {
+            Section {
                 if let exportURL {
                     ShareLink(item: exportURL) {
                         Label("分享备份文件", systemImage: "square.and.arrow.up")
@@ -49,6 +49,8 @@ struct SettingsView: View {
                     Button("导出备份", systemImage: "square.and.arrow.up") { generateExport() }
                 }
                 Button("导入备份", systemImage: "square.and.arrow.down") { showImporter = true }
+            } header: {
+                Text("数据备份")
             } footer: {
                 Text("导出为一个压缩备份文件（含学生、成绩、相册及全部照片），可通过微信/邮件/文件 App 保存或转移。导入将整体覆盖当前数据。")
             }
@@ -91,7 +93,7 @@ struct SettingsView: View {
         guard let raw = viewModel.makeBackupData() else {
             message = "没有可导出的数据"; showMessage = true; return
         }
-        let compressed = raw.compressed(using: .zlib) ?? raw
+        let compressed = (raw as NSData).compressed(using: .zlib) ?? raw
         let fmt = DateFormatter(); fmt.locale = Locale(identifier: "zh_CN"); fmt.dateFormat = "yyyyMMdd-HHmm"
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("班主任备份-\(fmt.string(from: Date())).backup")
