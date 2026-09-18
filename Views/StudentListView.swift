@@ -8,6 +8,9 @@ struct StudentListView: View {
     @Environment(\.openURL) private var openURL
     @State private var searchText = ""
     @State private var showingAdd = false
+    @State private var showImporter = false
+    @State private var importMessage = ""
+    @State private var showImportAlert = false
     @State private var seatFilter: Int? = nil  // nil = 全部，0 = 未排座，1... = 第N排
     @State private var sortOption: SortOption = .bySeat
     @State private var showingSortMenu = false
@@ -155,6 +158,11 @@ struct StudentListView: View {
                     Image(systemName: "arrow.up.arrow.down")
                 }
                 Button {
+                    showImporter = true
+                } label: {
+                    Image(systemName: "tray.and.arrow.down")
+                }
+                Button {
                     printRoster()
                 } label: {
                     Image(systemName: "printer")
@@ -171,6 +179,21 @@ struct StudentListView: View {
             NavigationStack {
                 StudentFormView(mode: .add)
             }
+        }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data, .plainText, .commaSeparatedText]) { result in
+            switch result {
+            case .success(let url):
+                let count = viewModel.importStudents(from: url)
+                importMessage = count > 0 ? "成功导入 \(count) 名学生" : "未识别到有效数据，请确认是 UTF-8 的学生表 CSV"
+                showImportAlert = true
+            case .failure:
+                importMessage = "未能读取文件"; showImportAlert = true
+            }
+        }
+        .alert("导入学生表", isPresented: $showImportAlert) {
+            Button("好", role: .cancel) {}
+        } message: {
+            Text(importMessage)
         }
         // 按排筛选标签（放在搜索栏下方）
         .safeAreaInset(edge: .top) {

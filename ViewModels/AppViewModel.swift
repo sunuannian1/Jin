@@ -224,13 +224,20 @@ class AppViewModel: ObservableObject {
     // 批量导入成绩（CSV 解析后调用）
     // 返回 (成功导入条数, 失败条数, 未找到学生列表)
     @discardableResult
+    /// 学号规范化：纯数字转两位补零（1→01），其余去空格
+    static func normNumber(_ s: String) -> String {
+        let t = s.trimmingCharacters(in: .whitespaces)
+        if let n = Int(t) { return String(format: "%02d", n) }
+        return t
+    }
+
     func importScores(examId: UUID, records: [(studentNumber: String, subject: String, score: Double)]) -> (success: Int, failed: Int, notFound: [String]) {
         var success = 0
         var failed = 0
         var notFound: Set<String> = []
 
         for record in records {
-            guard let student = students.first(where: { $0.studentNumber == record.studentNumber }) else {
+            guard let student = students.first(where: { Self.normNumber($0.studentNumber) == Self.normNumber(record.studentNumber) }) else {
                 notFound.insert(record.studentNumber)
                 failed += 1
                 continue
@@ -804,4 +811,86 @@ struct StudentExamRecord: Identifiable {
     let subjectScores: [(subject: String, score: Double, full: Double)]
     // 总得分率 0-1
     var totalRatio: Double { fullTotal > 0 ? total / fullTotal : 0 }
+}
+
+// MARK: - CSV 导入
+enum CSVParser {
+    static func parse(_ text: String) -> [[String]] {
+        var rows: [[String]] = []
+        var field = ""
+        var row: [String] = []
+        var inQuotes = false
+        let chars = Array(text)
+        var i = 0
+        while i < chars.count {
+            let c = chars[i]
+            if inQuotes {
+                if c == "\"" {
+                    if i + 1 < chars.count && chars[i + 1] == "\"" { field += "\""; i += 1 }
+                    else { inQuotes = false }
+                } else { field.append(c) }
+            } else {
+                switch c {
+                case ",": row.append(field); field = ""
+                case "\"": inQuotes = true
+                case "\n": row.append(field); rows.append(row); row = []; field = ""
+                case "\r": break
+                default: field.append(c)
+                }
+            }
+            i += 1
+        }
+        if !field.isEmpty || !row.isEmpty { row.append(field); rows.append(row) }
+        return rows.filter { !$0.allSatisfy { $0.trimmingCharacters(in: .whitespaces).isEmpty } }
+    }
+}
+
+extension AppViewModel {
+    /// 导入学生表 CSV，返回导入人数。学号自动按 01、02... 两位补零。
+    @discardableResult
+    func importStudents(from url: URL) -> Int {
+        guard let data = try? Data(contentsOf: url) else { return 0 }
+        let gbk = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(CFStringEncodings.GB_18030_2000.rawValue)))
+        let raw = String(data: data, encoding: .utf8) ?? String(data: data, encoding: gbk) ?? ""
+        let rows = CSVParser.parse(raw)
+        guard rows.count >= 2 else { return 0 }
+        let headers = rows[0].map { $0.trimmingCharacters(in: .whitespaces) }
+        func col(_ name: String) -> Int? { headers.firstIndex { $0.contains(name) } }
+        let ciName = col("姓名")
+        let ciGender = col("性别")
+        let ciEthnic = col("民族")
+        let ciBirth = col("出生")
+        let ciID = col("身份证")
+        let ciNum = col("学号") ?? col("序号") ?? col("座号")
+        let ciFatherName = headers.firstIndex { $0.contains("爸爸") && $0.contains("姓名") } ?? headers.firstIndex { $0.contains("父亲") && $0.contains("姓名") }
+        let ciFatherPhone = headers.firstIndex { $0.contains("爸爸") && $0.contains("电话") } ?? headers.firstIndex { $0.contains("父亲") && $0.contains("电话") }
+        let ciMotherName = headers.firstIndex { $0.contains("妈妈") && $0.contains("姓名") } ?? headers.firstIndex { $0.contains("母亲") && $0.contains("姓名") }
+        let ciMotherPhone = headers.firstIndex { $0.contains("妈妈") && $0.contains("电话") } ?? headers.firstIndex { $0.contains("母亲") && $0.contains("电话") }
+        let ciAddr = col("住址") ?? col("地址")
+        let ciGroup = col("小组")
+        let ciDorm = col("宿舍")
+
+        var count = 0
+        for r in rows.dropFirst() {
+            func cell(_ i: Int?) -> String { guard let i, i < r.count else { return "" }; return r[i].trimmingCharacters(in: .whitespaces) }
+            guard let ciName, let name = ciName < r.count ? r[ciName].trimmingCharacters(in: .whitespaces) : "", !name.isEmpty else { continue }
+            // 学号：CSV 有就用，没有按行号 01、02...
+            var number = cell(ciNum)
+            if number.isEmpty { number = String(format: "%02d", count + 1) }
+            if let n = Int(number) { number = String(format: "%02d", n) }
+            let gender: Student.Gender = (cell(ciGender).contains("女")) ? .female : .male
+            let group = Int(cell(ciGroup)) ?? 1
+            let s = Student(
+                name: name, studentNumber: number, gender: gender,
+                fatherName: cell(ciFatherName), fatherPhone: cell(ciFatherPhone),
+                motherName: cell(ciMotherName), motherPhone: cell(ciMotherPhone),
+                ethnicity: cell(ciEthnic).isEmpty ? "汉" : cell(ciEthnic),
+                birthDate: cell(ciBirth), idCardNumber: cell(ciID),
+                address: cell(ciAddr), groupNumber: group, dormitory: cell(ciDorm)
+            )
+            students.append(s)
+            count += 1
+        }
+        return count
+    }
 }
