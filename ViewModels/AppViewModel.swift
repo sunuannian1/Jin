@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import Compression
 
 // 全局应用状态：真数据、本地持久化、无假数据
 class AppViewModel: ObservableObject {
@@ -612,8 +613,10 @@ class AppViewModel: ObservableObject {
 
     @discardableResult
     func importBackup(from url: URL) -> Bool {
-        guard let data = try? Data(contentsOf: url),
-              let backup = try? JSONDecoder().decode(AllDataBackup.self, from: data) else { return false }
+        guard let raw = try? Data(contentsOf: url) else { return false }
+        // 兼容 gzip 压缩包与未压缩 JSON
+        let data = raw.decompressed(using: .zlib) ?? raw
+        guard let backup = try? JSONDecoder().decode(AllDataBackup.self, from: data) else { return false }
         clearAllData()
         dataManager.importPhotoFiles(backup.photoFiles)
         classInfo = backup.classInfo

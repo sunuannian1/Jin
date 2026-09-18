@@ -9,6 +9,10 @@ struct SettingsView: View {
     @State private var headTeacher = ""
     @State private var subjects: [String] = []
     @State private var newSubject = ""
+    @State private var showImporter = false
+    @State private var exportURL: URL?
+    @State private var message: String?
+    @State private var showMessage = false
 
     var body: some View {
         Form {
@@ -35,6 +39,19 @@ struct SettingsView: View {
                     .disabled(newSubject.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
+            Section("数据备份") {
+                if let exportURL {
+                    ShareLink(item: exportURL) {
+                        Label("分享备份文件", systemImage: "square.and.arrow.up")
+                    }
+                    Button("重新生成备份") { generateExport() }
+                } else {
+                    Button("导出备份", systemImage: "square.and.arrow.up") { generateExport() }
+                }
+                Button("导入备份", systemImage: "square.and.arrow.down") { showImporter = true }
+            } footer: {
+                Text("导出为一个压缩备份文件（含学生、成绩、相册及全部照片），可通过微信/邮件/文件 App 保存或转移。导入将整体覆盖当前数据。")
+            }
             Section {
                 Button("保存设置") {
                     viewModel.updateClassInfo(
@@ -52,7 +69,38 @@ struct SettingsView: View {
         }
         .navigationTitle("班级设置")
         .navigationBarTitleDisplayMode(.inline)
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data]) { result in
+            switch result {
+            case .success(let url):
+                if viewModel.importBackup(from: url) { message = "导入成功" }
+                else { message = "导入失败，请选择正确的备份文件" }
+                showMessage = true
+            case .failure:
+                message = "未能读取文件"; showMessage = true
+            }
+        }
+        .alert("提示", isPresented: $showMessage, presenting: message) { _ in
+            Button("好", role: .cancel) {}
+        } message: { msg in
+            Text(msg)
+        }
         .onAppear(perform: load)
+    }
+
+    private func generateExport() {
+        guard let raw = viewModel.makeBackupData() else {
+            message = "没有可导出的数据"; showMessage = true; return
+        }
+        let compressed = raw.compressed(using: .zlib) ?? raw
+        let fmt = DateFormatter(); fmt.locale = Locale(identifier: "zh_CN"); fmt.dateFormat = "yyyyMMdd-HHmm"
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("班主任备份-\(fmt.string(from: Date())).backup")
+        do {
+            try compressed.write(to: url, options: .atomic)
+            exportURL = url
+        } catch {
+            message = "导出失败：\(error.localizedDescription)"; showMessage = true
+        }
     }
 
     private func load() {
