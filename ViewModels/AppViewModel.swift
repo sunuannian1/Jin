@@ -667,7 +667,7 @@ class AppViewModel: ObservableObject {
 
     @discardableResult
     func importBackup(from url: URL) -> Bool {
-        guard let raw = try? Data(contentsOf: url) else { return false }
+        guard let raw = Self.readSecuredFile(url) else { return false }
         // 兼容 gzip 压缩包与未压缩 JSON
         let decompressed = try? NSData(data: raw).decompressed(using: .zlib) as Data?
         let data = decompressed ?? raw
@@ -870,6 +870,24 @@ struct StudentExamRecord: Identifiable {
 
 // MARK: - CSV 导入
 enum CSVParser {
+    /// 把文件字节解成文本：先认 UTF-16 BOM，再试 UTF-8，最后回退 GBK/GB18030，
+    /// 并统一剥掉开头的 BOM。
+    /// 原先直接 `String(data:, .utf8) ?? GBK`：UTF-16 的 Excel/WPS 导出会走进错误分支，
+    /// 而 BOM 残留会让首列表头匹配失败。
+    static func decodeText(_ data: Data) -> String {
+        var text: String?
+        if data.starts(with: [0xFF, 0xFE]) || data.starts(with: [0xFE, 0xFF]) {
+            text = String(data: data, encoding: .unicode)          // UTF-16（自动处理 BOM）
+        } else {
+            let gbk = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(
+                CFStringEncoding(CFStringEncodings.GB_18030_2000.rawValue)))
+            text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: gbk)
+        }
+        guard var result = text else { return "" }
+        if result.hasPrefix("\u{FEFF}") { result.removeFirst() }
+        return result
+    }
+
     static func parse(_ text: String) -> [[String]] {
         var rows: [[String]] = []
         var field = ""
@@ -901,15 +919,23 @@ enum CSVParser {
 }
 
 extension AppViewModel {
+    /// fileImporter 给出的是安全作用域 URL：不先申请授权就直接读字节，
+    /// 从"文件"、微信、邮件等 App 容器外的位置选文件会静默失败（成绩/备份导入有申请，
+    /// 学生导入此前漏了，导致提示误导成"编码不对"）。
+    static func readSecuredFile(_ url: URL) -> Data? {
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+        return try? Data(contentsOf: url)
+    }
+
     /// 导入学生表 CSV，返回导入人数。学号自动按 01、02... 两位补零。
     @discardableResult
     func importStudents(from url: URL) -> Int {
-        guard let data = try? Data(contentsOf: url) else { return 0 }
-        let gbk = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(CFStringEncodings.GB_18030_2000.rawValue)))
-        let raw = String(data: data, encoding: .utf8) ?? String(data: data, encoding: gbk) ?? ""
+        guard let data = Self.readSecuredFile(url) else { return 0 }
+        let raw = CSVParser.decodeText(data)
         let rows = CSVParser.parse(raw)
         guard rows.count >= 2 else { return 0 }
-        let headers = rows[0].map { $0.trimmingCharacters(in: .whitespaces) }
+        let headers = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
         func col(_ name: String) -> Int? { headers.firstIndex { $0.contains(name) } }
         let ciName = col("姓名")
         let ciGender = col("性别")
@@ -935,14 +961,16 @@ extension AppViewModel {
         let oldMomName = headers.firstIndex { $0.contains("妈妈") && $0.contains("姓名") }
         let oldMomPhone = headers.firstIndex { $0.contains("妈妈") && $0.contains("电话") }
 
-        var count = 0
+        // 先全部解析到局部数组，最后一次写入：原先每行 students.append，
+        // 导 50 人就是 50 次全应用刷新 + 50 次防抖落盘排队
+        var imported: [Student] = []
         for r in rows.dropFirst() {
-            func cell(_ i: Int?) -> String { guard let i, i < r.count else { return "" }; return r[i].trimmingCharacters(in: .whitespaces) }
+            func cell(_ i: Int?) -> String { guard let i, i < r.count else { return "" }; return r[i].trimmingCharacters(in: .whitespacesAndNewlines) }
             let name = cell(ciName)
             guard !name.isEmpty else { continue }
             // 学号：CSV 有就用，没有按行号 01、02...
             var number = cell(ciNum)
-            if number.isEmpty { number = String(format: "%02d", count + 1) }
+            if number.isEmpty { number = String(format: "%02d", imported.count + 1) }
             if let n = Int(number) { number = String(format: "%02d", n) }
             let gender: Student.Gender = (cell(ciGender).contains("女")) ? .female : .male
             let group = Int(cell(ciGroup)) ?? 1
@@ -969,9 +997,10 @@ extension AppViewModel {
                 birthDate: cell(ciBirth), idCardNumber: cell(ciID),
                 address: cell(ciAddr), groupNumber: group, dormitory: cell(ciDorm)
             )
-            students.append(s)
-            count += 1
+            imported.append(s)
         }
-        return count
+        guard !imported.isEmpty else { return 0 }
+        students.append(contentsOf: imported)
+        return imported.count
     }
 }

@@ -196,7 +196,9 @@ struct StudentListView: View {
             switch result {
             case .success(let url):
                 let count = viewModel.importStudents(from: url)
-                importMessage = count > 0 ? "成功导入 \(count) 名学生" : "未识别到有效数据，请确认是 UTF-8 的学生表 CSV"
+                // 原先一律提示"请确认是 UTF-8"，而真实原因多半是缺表头/缺姓名列或没读到文件
+                importMessage = count > 0 ? "成功导入 \(count) 名学生"
+                    : "没读到有效数据：CSV 需有表头行，且包含「姓名」列（支持 UTF-8 / GBK / UTF-16）"
                 showImportAlert = true
             case .failure:
                 importMessage = "未能读取文件"; showImportAlert = true

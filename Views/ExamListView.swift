@@ -477,10 +477,32 @@ struct ScoreCSVImportView: View {
         viewModel.exams.sorted { $0.date > $1.date }
     }
 
+    // 学号列 / 姓名列按表头认，不再假设"前两列固定是学号+姓名"
+    // （教师表格常见 序号/学号/考号 混用，位置假设会让整表匹配不到学生）
+    private var numberColumnIndex: Int? {
+        headers.firstIndex { $0.contains("学号") || $0.contains("考号") || $0.contains("序号") }
+    }
+    private var nameColumnIndex: Int? {
+        headers.firstIndex { $0.contains("姓名") }
+    }
+
+    // 非科目表头：总分/排名/座位之类的列，不能被当成科目导进去
+    private static let nonSubjectHeaders = ["总分", "合计", "排名", "名次", "座位", "学号", "考号",
+                                           "序号", "姓名", "备注", "组", "宿舍", "均分", "平均分", "班级"]
+
+    private var subjectColumnIndices: [Int] {
+        let idIdx = numberColumnIndex
+        let nameIdx = nameColumnIndex
+        return headers.indices.filter { i in
+            let header = headers[i]
+            if header.isEmpty { return false }
+            if i == idIdx || i == nameIdx { return false }
+            return !Self.nonSubjectHeaders.contains { header.contains($0) }
+        }
+    }
+
     private var subjectColumns: [String] {
-        // 假设前两列是学号、姓名，后面都是科目
-        guard headers.count > 2 else { return [] }
-        return Array(headers.dropFirst(2))
+        subjectColumnIndices.map { headers[$0] }
     }
 
     var body: some View {
@@ -711,12 +733,9 @@ private func examSubtitle(for exam: Exam) -> String {
 
     // 解析 CSV
     private func parseCSV(url: URL) {
-        let accessing = url.startAccessingSecurityScopedResource()
-        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
-
-        let gbkEncoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(CFStringEncodings.GB_18030_2000.rawValue)))
-        guard let data = try? Data(contentsOf: url),
-              let content = String(data: data, encoding: .utf8) ?? String(data: data, encoding: gbkEncoding) else { return }
+        guard let data = AppViewModel.readSecuredFile(url) else { return }
+        // 统一交给 CSVParser.decodeText：认 UTF-16 BOM、回退 GBK，并剥掉开头 BOM
+        let content = CSVParser.decodeText(data)
 
         fileName = url.lastPathComponent
 
@@ -724,7 +743,7 @@ private func examSubtitle(for exam: Exam) -> String {
         guard !lines.isEmpty else { return }
 
         // 解析表头
-        headers = parseCSVLine(lines[0])
+        headers = parseCSVLine(lines[0]).map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
 
         // 解析数据行
         parsedRows = Array(lines.dropFirst()).map { parseCSVLine($0) }
@@ -754,17 +773,18 @@ private func examSubtitle(for exam: Exam) -> String {
     private func performImport() {
         guard let examId = selectedExamId else { return }
 
+        let idIdx = numberColumnIndex ?? 0
         var records: [(studentNumber: String, subject: String, score: Double)] = []
+        let columnIndices = subjectColumnIndices
 
         for row in parsedRows {
-            guard row.count >= 3 else { continue }
-            let studentNumber = row[0]
-            // row[1] 是姓名，跳过
-            for (idx, subject) in subjectColumns.enumerated() {
-                let scoreIdx = idx + 2
-                guard scoreIdx < row.count else { continue }
-                if let score = Double(row[scoreIdx]) {
-                    records.append((studentNumber, subject, score))
+            guard idIdx < row.count else { continue }
+            let studentNumber = row[idIdx]
+            guard !studentNumber.isEmpty else { continue }
+            for i in columnIndices {
+                guard i < row.count else { continue }
+                if let score = Double(row[i]) {
+                    records.append((studentNumber, headers[i], score))
                 }
             }
         }
