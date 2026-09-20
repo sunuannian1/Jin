@@ -22,6 +22,10 @@ struct ClassMapView: View {
     @State private var isGeocoding = false
     @State private var selectedStudent: Student?
     @State private var hasAutoGeocoded = false
+    // 视图结构体每次刷新都会重新构造，原先 `private let geocoder = CLGeocoder()`
+    // 会跟着不断新建实例（而且 cancel 时已经拿不到发起请求的那个实例）。
+    @State private var geocoder = CLGeocoder()
+    @State private var geocodeTask: Task<Void, Never>?
 
     // 有坐标的学生
     private var studentsWithCoord: [Student] {
@@ -36,9 +40,9 @@ struct ClassMapView: View {
         }
     }
 
-    // 地图标注
-    private var pins: [StudentPin] {
-        studentsWithCoord.map { stu in
+    // 地图标注：接收已过滤的数组，避免再走一遍全表
+    private func pins(from located: [Student]) -> [StudentPin] {
+        located.map { stu in
             StudentPin(
                 id: stu.id,
                 name: stu.name,
@@ -50,13 +54,13 @@ struct ClassMapView: View {
     }
 
     // 选中学生附近的3个学生（按距离排序）
-    private var nearbyStudents: [Student] {
+    private func nearbyStudents(in located: [Student]) -> [Student] {
         guard let selected = selectedStudent,
               let selLat = selected.latitude, let selLon = selected.longitude else {
             return []
         }
         let selectedCoord = CLLocation(latitude: selLat, longitude: selLon)
-        return studentsWithCoord
+        return located
             .filter { $0.id != selected.id }
             .map { stu -> (student: Student, distance: CLLocationDistance) in
                 let coord = CLLocation(latitude: stu.latitude!, longitude: stu.longitude!)
@@ -68,6 +72,10 @@ struct ClassMapView: View {
     }
 
     var body: some View {
+        // 每帧只过滤一次：原先 pins / 计数 / 小区数 / 附近三人都各自全表扫一遍
+        let located = studentsWithCoord
+        let pinList = pins(from: located)
+        let areaTotal = areaCount(in: located)
         Group {
             if viewModel.students.isEmpty {
                 EmptyStateView(
@@ -78,7 +86,7 @@ struct ClassMapView: View {
             } else {
                 ZStack(alignment: .bottom) {
                     // 全屏地图
-                    Map(coordinateRegion: $region, annotationItems: pins) { pin in
+                    Map(coordinateRegion: $region, annotationItems: pinList) { pin in
                         MapAnnotation(coordinate: pin.coordinate) {
                             Button {
                                 selectedStudent = viewModel.students.first { $0.id == pin.id }
@@ -104,13 +112,13 @@ struct ClassMapView: View {
                         HStack {
                             Spacer()
                             HStack(spacing: 6) {
-                                Text("\(studentsWithCoord.count)")
+                                Text("\(located.count)")
                                     .font(.caption.weight(.bold))
                                     .foregroundColor(AppTheme.Colors.accent)
                                 Text("位学生 ·")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
-                                Text("\(areaCount)")
+                                Text("\(areaTotal)")
                                     .font(.caption.weight(.bold))
                                     .foregroundColor(.blue)
                                 Text("个小区")
@@ -163,7 +171,7 @@ struct ClassMapView: View {
 
                     // 选中学生时显示抽屉（含该学生 + 附近3人）
                     if selectedStudent != nil {
-                        studentPanel
+                        studentPanel(located)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
@@ -177,7 +185,7 @@ struct ClassMapView: View {
                     ProgressView()
                 } else if !studentsNeedGeocode.isEmpty {
                     Button {
-                        Task { await geocodeAll() }
+                        startGeocoding()
                     } label: {
                         Label("解析地址", systemImage: "location.magnifyingglass")
                     }
@@ -189,15 +197,26 @@ struct ClassMapView: View {
             // 自动解析未解析的地址
             if !hasAutoGeocoded && !studentsNeedGeocode.isEmpty {
                 hasAutoGeocoded = true
-                Task { await geocodeAll() }
+                startGeocoding()
             }
+        }
+        .onDisappear {
+            // 离页即停：原先即使页面已经划走，后台仍会把所有地址跑完并持续写回数据模型
+            geocodeTask?.cancel()
+            geocodeTask = nil
+            geocoder.cancelGeocode()
         }
         .animation(.easeInOut(duration: 0.25), value: selectedStudent)
     }
 
+    private func startGeocoding() {
+        guard !isGeocoding, geocodeTask == nil else { return }
+        geocodeTask = Task { await geocodeAll() }
+    }
+
     // 统计不同小区/村庄数量
-    private var areaCount: Int {
-        let areas = Set(studentsWithCoord.map { stu -> String in
+    private func areaCount(in located: [Student]) -> Int {
+        let areas = Set(located.map { stu -> String in
             let addr = stu.address
             let parts = addr.split(separator: "-")
             if parts.count >= 3 {
@@ -209,11 +228,11 @@ struct ClassMapView: View {
     }
 
     // 选中学生面板（含附近3人）
-    private var studentPanel: some View {
+    private func studentPanel(_ located: [Student]) -> some View {
         VStack(spacing: 0) {
             // 顶部拖拽条
             RoundedRectangle(cornerRadius: 2)
-                .fill(Color.gray.opacity(0.3))
+                .fill(AppTheme.Colors.tertiaryText.opacity(0.4))
                 .frame(width: 36, height: 4)
                 .padding(.top, 8)
 
@@ -262,8 +281,9 @@ struct ClassMapView: View {
                             .padding(.horizontal, 16)
                     }
 
+                    let nearby = nearbyStudents(in: located)
                     // 附近3个学生
-                    if !nearbyStudents.isEmpty {
+                    if !nearby.isEmpty {
                         VStack(alignment: .leading, spacing: 0) {
                             HStack {
                                 Text("附近同学")
@@ -275,7 +295,7 @@ struct ClassMapView: View {
                             .padding(.top, 10)
                             .padding(.bottom, 4)
 
-                            ForEach(nearbyStudents) { student in
+                            ForEach(nearby) { student in
                                 Button {
                                     selectedStudent = student
                                     // 移动地图到该学生
@@ -429,10 +449,14 @@ struct ClassMapView: View {
 
     // 批量解析所有未解析的学生地址（高德优先）
     private func geocodeAll() async {
-        guard !isGeocoding, !studentsNeedGeocode.isEmpty else { return }
+        // 一次性快照：循环里每写回一个学生都会让 body 重新求值，
+        // 原先 studentsNeedGeocode 是计算属性，会被反复重算
+        let pending = studentsNeedGeocode
+        guard !isGeocoding, !pending.isEmpty else { return }
         await MainActor.run { isGeocoding = true }
 
-        for student in studentsNeedGeocode {
+        for student in pending {
+            if Task.isCancelled { break }
             let address = normalizedAddress(student.address)
             var coord: CLLocationCoordinate2D?
 
@@ -456,9 +480,10 @@ struct ClassMapView: View {
             try? await Task.sleep(nanoseconds: 400_000_000)
         }
 
+        let cancelled = Task.isCancelled
         await MainActor.run {
             isGeocoding = false
-            fitRegion()
+            if !cancelled { fitRegion() }
         }
     }
 }
