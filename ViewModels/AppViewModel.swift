@@ -574,16 +574,22 @@ class AppViewModel: ObservableObject {
         albumPhotos.removeAll { $0.folderId == folder.id }
         albumFolders.removeAll { $0.id == folder.id }
     }
-    @discardableResult
-    func addPhoto(data: Data, folderId: UUID, title: String = "") -> AlbumPhoto? {
-        guard albumFolders.contains(where: { $0.id == folderId }) else { return nil }
-        let photo = AlbumPhoto(folderId: folderId, title: title)
-        dataManager.savePhotoData(data, id: photo.id)
-        albumPhotos.append(photo)
-        if let i = albumFolders.firstIndex(where: { $0.id == folderId }) {
-            albumFolders[i].photoIds.append(photo.id)
+    // 批量导入照片：原先每张各触发两次 @Published 写入，导 50 张就是上百次整页重算；
+    // 整批只在末尾发布两次（照片数组、相册数组各一次）。
+    func addPhotos(_ payloads: [Data], to folderId: UUID) {
+        guard let i = albumFolders.firstIndex(where: { $0.id == folderId }) else { return }
+        var newPhotos: [AlbumPhoto] = []
+        newPhotos.reserveCapacity(payloads.count)
+        var newIDs: [UUID] = []
+        newIDs.reserveCapacity(payloads.count)
+        for data in payloads {
+            let photo = AlbumPhoto(folderId: folderId, title: "")
+            dataManager.savePhotoData(data, id: photo.id)
+            newPhotos.append(photo)
+            newIDs.append(photo.id)
         }
-        return photo
+        albumPhotos.append(contentsOf: newPhotos)
+        albumFolders[i].photoIds.append(contentsOf: newIDs)
     }
     func updatePhoto(_ photo: AlbumPhoto) {
         if let i = albumPhotos.firstIndex(where: { $0.id == photo.id }) { albumPhotos[i] = photo }

@@ -29,45 +29,62 @@ struct ScheduleView: View {
         PeriodInfo(period: 8, label: "第8节", time: "17:15-18:00", section: "下午"),
     ]
 
-    // 当前节次（根据时间判断）
-    private var currentPeriod: Int? {
-        let calendar = Calendar.current
-        let now = Date()
-        let hour = calendar.component(.hour, from: now)
-        let minute = calendar.component(.minute, from: now)
-        let totalMinutes = hour * 60 + minute
+    // 当前节次（按传入时间判断）：原先是每次访问都 Date() + 新建节次表，
+    // 一行一次、每帧十几次；改成静态表 + 显式传时间，由 TimelineView 每分钟驱动。
+    private static let periodRanges: [(period: Int, start: Int, end: Int)] = [
+        (0, 7 * 60, 7 * 60 + 40),
+        (1, 8 * 60, 8 * 60 + 45),
+        (2, 8 * 60 + 55, 9 * 60 + 40),
+        (3, 10 * 60 + 10, 10 * 60 + 55),
+        (4, 11 * 60 + 5, 11 * 60 + 50),
+        (5, 14 * 60 + 30, 15 * 60 + 15),
+        (6, 15 * 60 + 25, 16 * 60 + 10),
+        (7, 16 * 60 + 20, 17 * 60 + 5),
+        (8, 17 * 60 + 15, 18 * 60),
+    ]
 
-        let periods: [(Int, Int, Int)] = [
-            (0, 7*60, 7*60+40),
-            (1, 8*60, 8*60+45),
-            (2, 8*60+55, 9*60+40),
-            (3, 10*60+10, 10*60+55),
-            (4, 11*60+5, 11*60+50),
-            (5, 14*60+30, 15*60+15),
-            (6, 15*60+25, 16*60+10),
-            (7, 16*60+20, 17*60+5),
-            (8, 17*60+15, 18*60),
-        ]
-        for (p, start, end) in periods {
-            if totalMinutes >= start && totalMinutes <= end {
-                return p
-            }
+    private func currentPeriod(at date: Date) -> Int? {
+        let calendar = Calendar.current
+        let totalMinutes = calendar.component(.hour, from: date) * 60 + calendar.component(.minute, from: date)
+        for range in Self.periodRanges where totalMinutes >= range.start && totalMinutes <= range.end {
+            return range.period
         }
         return nil
     }
 
+    private func dayOfWeek(for date: Date) -> Int {
+        (Calendar.current.component(.weekday, from: date) + 5) % 7 + 1
+    }
+
+    // 天 -> (节次 -> 课程)：格子直接查表，不再每格 filter+sort 一遍全量课程
+    private func courseIndex() -> [Int: [Int: Course]] {
+        var index: [Int: [Int: Course]] = [:]
+        for course in viewModel.courses {
+            index[course.dayOfWeek, default: [:]][course.period] = course
+        }
+        return index
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            headerRow
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 0) {
-                    ForEach(periodInfos, id: \.period) { info in
-                        periodRow(info)
-                        if info.period == 2 { breakRow(label: "大课间 9:40-10:10") }
-                        if info.period == 4 { breakRow(label: "午休 11:50-14:30") }
+        // 每分钟推进一次：页面开着时"当前节次"高亮要跟着真实时间走
+        TimelineView(.periodic(from: .now, by: 60)) { timeline in
+            let now = timeline.date
+            let current = currentPeriod(at: now)
+            let today = dayOfWeek(for: now)
+            let coursesByDay = courseIndex()
+
+            VStack(spacing: 0) {
+                headerRow(today: today)
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        ForEach(periodInfos, id: \.period) { info in
+                            periodRow(info, today: today, current: current, coursesByDay: coursesByDay)
+                            if info.period == 2 { breakRow(label: "大课间 9:40-10:10") }
+                            if info.period == 4 { breakRow(label: "午休 11:50-14:30") }
+                        }
                     }
+                    .padding(.bottom, 16)
                 }
-                .padding(.bottom, 16)
             }
         }
         .background(AppTheme.Colors.background)
@@ -76,6 +93,7 @@ struct ScheduleView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { printSchedule() } label: { Image(systemName: "printer") }
+                    .accessibilityLabel("打印课表")
             }
         }
         .sheet(item: $selectedSlot) {
@@ -84,14 +102,14 @@ struct ScheduleView: View {
     }
 
     // 吸顶表头：时间列 + 周一~周日
-    private var headerRow: some View {
+    private func headerRow(today: Int) -> some View {
         HStack(spacing: 3) {
             Text("节次")
                 .font(.system(size: 11, weight: .bold))
                 .foregroundColor(AppTheme.Colors.tertiaryText)
                 .frame(width: timeCol, height: 44)
             ForEach(1...7, id: \.self) { weekday in
-                let isToday = weekday == viewModel.todayDayOfWeek
+                let isToday = weekday == today
                 VStack(spacing: 1) {
                     Text(weekdays[weekday - 1])
                         .font(.system(size: 12, weight: .semibold))
@@ -127,8 +145,9 @@ struct ScheduleView: View {
     }
 
     // 一节课程行：时间列 + 7 天，严格对齐表头
-    private func periodRow(_ info: PeriodInfo) -> some View {
-        let isCurrent = currentPeriod == info.period
+    private func periodRow(_ info: PeriodInfo, today: Int, current: Int?,
+                           coursesByDay: [Int: [Int: Course]]) -> some View {
+        let isCurrent = current == info.period
         return HStack(spacing: 3) {
             VStack(spacing: 2) {
                 Text(info.label)
@@ -145,7 +164,8 @@ struct ScheduleView: View {
 
             ForEach(1...7, id: \.self) { weekday in
                 courseCell(weekday: weekday, period: info.period,
-                           isToday: weekday == viewModel.todayDayOfWeek, isCurrent: isCurrent)
+                           course: coursesByDay[weekday]?[info.period],
+                           isToday: weekday == today, isCurrent: isCurrent)
             }
         }
         .padding(.horizontal, 10)
@@ -154,42 +174,44 @@ struct ScheduleView: View {
 
     // 课程格子：窄列只放科目 + 老师，去掉教室，避免拥挤换行
     @ViewBuilder
-    private func courseCell(weekday: Int, period: Int, isToday: Bool, isCurrent: Bool) -> some View {
-        let course = viewModel.courses(for: weekday).first { $0.period == period }
+    private func courseCell(weekday: Int, period: Int, course: Course?, isToday: Bool, isCurrent: Bool) -> some View {
         Button {
             selectedSlot = ScheduleSlot(weekday: weekday, period: period)
         } label: {
             Group {
                 if let course = course {
+                    let tint = courseColor(course.subject)
                     VStack(spacing: 2) {
                         Text(course.subject)
                             .font(.system(size: 11.5, weight: .semibold))
-                            .foregroundColor(.primary)
+                            .foregroundColor(AppTheme.Colors.primaryText)
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
                         if !course.teacher.isEmpty {
                             Text(course.teacher)
                                 .font(.system(size: 8.5, weight: .medium))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppTheme.Colors.secondaryText)
                                 .lineLimit(1)
+                                .minimumScaleFactor(0.6)
                         }
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: rowHeight)
-                    .background(courseColor(course.subject).opacity(0.16))
+                    .background(tint.opacity(0.16))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(courseColor(course.subject).opacity(isCurrent ? 0.85 : 0.45), lineWidth: isCurrent ? 2 : 1)
+                            .stroke(tint.opacity(isCurrent ? 0.85 : 0.45), lineWidth: isCurrent ? 2 : 1)
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 } else {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(isToday ? AppTheme.Colors.accent.opacity(0.05) : Color.gray.opacity(0.035))
+                        .fill(isToday ? AppTheme.Colors.accent.opacity(0.05)
+                                      : AppTheme.Colors.subtleBackground.opacity(0.45))
                         .frame(maxWidth: .infinity)
                         .frame(height: rowHeight)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .stroke(Color.gray.opacity(0.10), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                                .stroke(AppTheme.Colors.separator, style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
                         )
                 }
             }
@@ -198,13 +220,20 @@ struct ScheduleView: View {
     }
 
     private func courseColor(_ subject: String) -> Color {
-        let palette: [Color] = [.blue, .orange, .purple, .green, .pink, .teal, .indigo, .brown, .red, .mint]
         var hash = 0
         for scalar in subject.unicodeScalars {
             hash = (hash &* 31 &+ Int(scalar.value)) & 0x7fffffff
         }
-        return palette[hash % palette.count]
+        return Self.subjectPalette[hash % Self.subjectPalette.count]
     }
+
+    // 科目配色：静态一次、全部走深色模式微调过的 token（原先每次调用都新建一份系统色数组）
+    private static let subjectPalette: [Color] = [
+        AppTheme.Colors.blue, AppTheme.Colors.orange, AppTheme.Colors.purple,
+        AppTheme.Colors.green, AppTheme.Colors.pink, AppTheme.Colors.teal,
+        AppTheme.Colors.indigo, AppTheme.Colors.brown, AppTheme.Colors.red,
+        AppTheme.Colors.mint
+    ]
 
     private func printSchedule() {
         let periods = Array(0...8)

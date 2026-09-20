@@ -1,4 +1,6 @@
 import Foundation
+import UIKit
+import ImageIO
 
 // 数据持久化管理：所有数据存 Documents 目录 JSON 文件
 class DataManager {
@@ -86,6 +88,46 @@ class DataManager {
         try? Data(contentsOf: photosDirectory.appendingPathComponent(id.uuidString))
     }
 
+    // MARK: - 图片解码（读盘 + 解码都不在主线程调用；缩略图带内存缓存）
+
+    // 原先 PhotoThumbView 每次 onAppear 都在主线程解码全尺寸 JPEG（注释写了"带缓存"但并无实现），
+    // 一张原图解码动辄几十毫秒，相册一屏十几张、回滚还会重解 —— 掉帧的主因。
+    private static let thumbnailCache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.countLimit = 200
+        return cache
+    }()
+
+    func loadThumbnail(id: UUID, maxPixelSize: CGFloat) -> UIImage? {
+        let key = "\(id.uuidString)@\(Int(maxPixelSize))" as NSString
+        if let cached = Self.thumbnailCache.object(forKey: key) { return cached }
+        guard let data = try? Data(contentsOf: photosDirectory.appendingPathComponent(id.uuidString)) else { return nil }
+        let sourceOptions: [AnyHashable: Any] = [kCGImageSourceShouldCache: false]
+        guard let source = CGImageSourceCreateWithData(data as CFData,
+                                                       (sourceOptions as NSDictionary) as CFDictionary) else { return nil }
+        let thumbnailOptions: [AnyHashable: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0,
+                                                                (thumbnailOptions as NSDictionary) as CFDictionary) else { return nil }
+        let image = UIImage(cgImage: cgImage)
+        Self.thumbnailCache.setObject(image, forKey: key)
+        return image
+    }
+
+    // 原图：全屏缩放浏览需要保留分辨率，所以不降采样、也不进缓存（避免驻留大位图）
+    func loadFullImage(id: UUID) -> UIImage? {
+        guard let data = try? Data(contentsOf: photosDirectory.appendingPathComponent(id.uuidString)) else { return nil }
+        return UIImage(data: data)
+    }
+
+    func clearThumbnailCache() {
+        Self.thumbnailCache.removeAllObjects()
+    }
+
     func deletePhotoData(id: UUID) {
         try? fileManager.removeItem(at: photosDirectory.appendingPathComponent(id.uuidString))
     }
@@ -139,6 +181,8 @@ class DataManager {
             guard let uuid = UUID(uuidString: id) else { continue }
             savePhotoData(data, id: uuid)
         }
+        // 同 id 的原图已被备份覆盖，缓存里是旧像素
+        clearThumbnailCache()
     }
 
     // 清空全部数据
@@ -147,5 +191,6 @@ class DataManager {
             try? fileManager.removeItem(at: fileURL(name))
         }
         deleteAllPhotoFiles()
+        clearThumbnailCache()
     }
 }

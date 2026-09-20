@@ -133,7 +133,7 @@ struct AlbumCard: View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
                 if let coverId {
-                    PhotoThumbView(photoId: coverId)
+                    PhotoThumbView(photoId: coverId, maxPixelSize: 1200)
                         .id(coverId)
                         .scaledToFill()
                 } else {
@@ -440,12 +440,18 @@ struct AlbumDetailView: View {
             isAdding = true
             let targetId = folder.id
             Task {
+                var payloads: [Data] = []
                 for item in items {
                     if let data = try? await item.loadTransferable(type: Data.self) {
-                        await MainActor.run { viewModel.addPhoto(data: data, folderId: targetId) }
+                        payloads.append(data)
                     }
                 }
-                await MainActor.run { pickerItems = []; isAdding = false }
+                // 整批一次提交：原先每张单独 addPhoto，导 50 张会触发上百次全页重算
+                await MainActor.run {
+                    viewModel.addPhotos(payloads, to: targetId)
+                    pickerItems = []
+                    isAdding = false
+                }
             }
         }
     }
@@ -454,7 +460,7 @@ struct AlbumDetailView: View {
     private func albumHeader(for folder: AlbumFolder) -> some View {
         Group {
             if let coverId = viewModel.coverPhotoId(of: folder) {
-                PhotoThumbView(photoId: coverId)
+                PhotoThumbView(photoId: coverId, maxPixelSize: 1000)
                     .id(coverId)
             } else {
                 LinearGradient(colors: [AppTheme.Colors.accent, AppTheme.Colors.accent.opacity(0.55)],
@@ -580,15 +586,21 @@ struct AlbumDetailView: View {
     }
 
     private func saveSelected() {
-        let images = selected.compactMap { id in viewModel.photoData(id: id).flatMap(UIImage.init(data:)) }
-        guard !images.isEmpty else { return }
-        let group = DispatchGroup()
-        for image in images {
-            group.enter()
-            ImageSaver.shared.save(image) { _ in group.leave() }
-        }
-        group.notify(queue: .main) {
-            withAnimation(AppTheme.Motion.smooth) { selected.removeAll(); selectionMode = false }
+        let ids = selected
+        // 批量导出时原先会在主线程一次性解出所有原图（选 20 张就是几秒卡死）
+        Task {
+            let images = await Task.detached(priority: .userInitiated) {
+                ids.compactMap { DataManager.shared.loadFullImage(id: $0) }
+            }.value
+            guard !images.isEmpty else { return }
+            let group = DispatchGroup()
+            for image in images {
+                group.enter()
+                ImageSaver.shared.save(image) { _ in group.leave() }
+            }
+            group.notify(queue: .main) {
+                withAnimation(AppTheme.Motion.smooth) { selected.removeAll(); selectionMode = false }
+            }
         }
     }
 
@@ -615,12 +627,13 @@ private let albumTimeFmt: DateFormatter = {
     let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "HH:mm"; return f
 }()
 
-// MARK: - 照片缩略图（从本地存储加载，带缓存）
+// MARK: - 照片缩略图（后台降采样解码 + 内存缓存）
 // 注意：内部禁止使用 maxHeight: .infinity —— 在 LazyVGrid 中会让竖长图按原始比例
 // 撑高、溢出方形格子，导致照片互相重叠；裁切与对齐一律交给外层 aspectRatio + clipped。
 struct PhotoThumbView: View {
-    @EnvironmentObject var viewModel: AppViewModel
     let photoId: UUID
+    /// 解码目标边长（像素）。按显示尺寸给：格子用默认值，整幅封面要更大。
+    var maxPixelSize: CGFloat = 400
     @State private var image: UIImage?
 
     var body: some View {
@@ -633,12 +646,20 @@ struct PhotoThumbView: View {
                     .overlay(ProgressView().scaleEffect(0.8))
             }
         }
-        .onAppear {
-            if image == nil {
-                image = viewModel.photoData(id: photoId).flatMap(UIImage.init(data:))
-            }
+        .task(id: loadKey) {
+            guard image == nil else { return }
+            let id = photoId
+            let side = maxPixelSize
+            let loaded = await Task.detached(priority: .userInitiated) {
+                DataManager.shared.loadThumbnail(id: id, maxPixelSize: side)
+            }.value
+            // 滚出屏幕时 .task 会自动取消，取消回来的结果不再赋值
+            guard !Task.isCancelled else { return }
+            image = loaded
         }
     }
+
+    private var loadKey: String { "\(photoId.uuidString)@\(Int(maxPixelSize))" }
 }
 
 // MARK: - 全屏大图浏览（左右滑动 + 双击/捏合缩放 + 描述/分享/封面/删除）
@@ -840,7 +861,6 @@ struct PhotoBrowserView: View {
 
 // 可缩放的单张大图（UIScrollView 原生缩放：捏合缩放 + 双击切换 + 放大后平移回弹）
 struct ZoomablePhoto: View {
-    @EnvironmentObject var viewModel: AppViewModel
     let photoId: UUID
     var onTap: () -> Void = {}
     @State private var image: UIImage?
@@ -854,8 +874,15 @@ struct ZoomablePhoto: View {
                 ProgressView().tint(.white)
             }
         }
-        .onAppear {
-            if image == nil { image = viewModel.photoData(id: photoId).flatMap(UIImage.init(data:)) }
+        .task(id: photoId) {
+            guard image == nil else { return }
+            let id = photoId
+            // 大图要保留原分辨率给捏合缩放，只把读盘+解码挪出主线程
+            let loaded = await Task.detached(priority: .userInitiated) {
+                DataManager.shared.loadFullImage(id: id)
+            }.value
+            guard !Task.isCancelled else { return }
+            image = loaded
         }
     }
 }
@@ -999,7 +1026,7 @@ struct PhotoInfoSheet: View {
     var body: some View {
         Form {
             Section("照片") {
-                PhotoThumbView(photoId: photo.id)
+                PhotoThumbView(photoId: photo.id, maxPixelSize: 800)
                     .id(photo.id)
                     .frame(height: 220)
                     .clipped()
