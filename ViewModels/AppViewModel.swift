@@ -317,47 +317,44 @@ class AppViewModel: ObservableObject {
         guard !records.isEmpty else { return 0 }
         return records.reduce(0) { $0 + $1.score } / Double(records.count)
     }
-    // 某科目及格率（>=60 占比）
-    func passRate(examId: UUID, subject: String) -> Double {
-        let records = scores(for: examId, subject: subject)
-        guard !records.isEmpty else { return 0 }
-        let pass = records.filter { $0.score >= 60 }.count
-        return Double(pass) / Double(records.count) * 100
+    // 一次单科统计：整张成绩表只扫一遍、只排序一次。
+    // 成绩详情页原先有 7 个统计属性各自全表过滤一遍（外加三次排序），
+    // 一次 body 求值就要扫十几遍，而那一页还能边打字边改。
+    struct SubjectStats {
+        var count = 0
+        var average = 0.0
+        var highest = 0.0
+        var lowest = 0.0
+        var median = 0.0
+        var stdDev = 0.0
+        var passRate = 0.0
+        var excellentRate = 0.0
+        var isEmpty: Bool { count == 0 }
     }
-    // 某科目全部分数（升序）
-    private func sortedScores(examId: UUID, subject: String) -> [Double] {
-        scores(for: examId, subject: subject).map { $0.score }.sorted()
-    }
-    // 最高分
-    func highestScore(examId: UUID, subject: String) -> Double {
-        sortedScores(examId: examId, subject: subject).max() ?? 0
-    }
-    // 最低分
-    func lowestScore(examId: UUID, subject: String) -> Double {
-        sortedScores(examId: examId, subject: subject).min() ?? 0
-    }
-    // 中位数
-    func medianScore(examId: UUID, subject: String) -> Double {
-        let sorted = sortedScores(examId: examId, subject: subject)
-        guard !sorted.isEmpty else { return 0 }
+
+    func stats(examId: UUID, subject: String) -> SubjectStats {
+        var values: [Double] = []
+        for record in scoreRecords where record.examId == examId && record.subject == subject {
+            values.append(record.score)
+        }
+        guard !values.isEmpty else { return SubjectStats() }
+
+        let sorted = values.sorted()
+        let sum = values.reduce(0, +)
         let n = sorted.count
-        if n % 2 == 1 { return sorted[n / 2] }
-        return (sorted[n / 2 - 1] + sorted[n / 2]) / 2
-    }
-    // 标准差（分数离散程度，越小越整齐）
-    func stdDeviation(examId: UUID, subject: String) -> Double {
-        let values = scores(for: examId, subject: subject).map { $0.score }
-        guard values.count > 1 else { return 0 }
-        let mean = values.reduce(0, +) / Double(values.count)
-        let variance = values.map { pow($0 - mean, 2) }.reduce(0, +) / Double(values.count)
-        return sqrt(variance)
-    }
-    // 优秀率（>=90 占比）
-    func excellentRate(examId: UUID, subject: String) -> Double {
-        let records = scores(for: examId, subject: subject)
-        guard !records.isEmpty else { return 0 }
-        let excellent = records.filter { $0.score >= 90 }.count
-        return Double(excellent) / Double(records.count) * 100
+        var result = SubjectStats()
+        result.count = n
+        result.average = sum / Double(n)
+        result.lowest = sorted.first ?? 0
+        result.highest = sorted.last ?? 0
+        result.median = n % 2 == 1 ? sorted[n / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+        if n > 1 {
+            let variance = values.map { pow($0 - result.average, 2) }.reduce(0, +) / Double(n)
+            result.stdDev = sqrt(variance)
+        }
+        result.passRate = Double(values.filter { $0 >= 60 }.count) / Double(n) * 100
+        result.excellentRate = Double(values.filter { $0 >= 90 }.count) / Double(n) * 100
+        return result
     }
     // 相比上一次同科目考试的均分变化（正=进步，负=退步；无可比则为 nil）
     func averageTrendDelta(examId: UUID, subject: String) -> Double? {

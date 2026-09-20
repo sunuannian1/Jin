@@ -37,17 +37,16 @@ struct ScoreDetailView: View {
     }
 
     // MARK: - 统计量
-    private var average: Double { viewModel.averageScore(examId: exam.id, subject: selectedSubject) }
-    private var passRate: Double { viewModel.passRate(examId: exam.id, subject: selectedSubject) }
-    private var excellentRate: Double { viewModel.excellentRate(examId: exam.id, subject: selectedSubject) }
-    private var highest: Double { viewModel.highestScore(examId: exam.id, subject: selectedSubject) }
-    private var lowest: Double { viewModel.lowestScore(examId: exam.id, subject: selectedSubject) }
-    private var median: Double { viewModel.medianScore(examId: exam.id, subject: selectedSubject) }
-    private var stdDev: Double { viewModel.stdDeviation(examId: exam.id, subject: selectedSubject) }
+    // 整页只算一次：body 顶部取 records / stats 各一份再往下传。
+    // 原先 7 个统计属性各自全表过滤一遍（其中最高/最低/中位还要各排一次序），
+    // 一次 body 求值要把成绩表扫十几遍，而这一页可以边打字边改。
+    private var stats: AppViewModel.SubjectStats {
+        viewModel.stats(examId: exam.id, subject: selectedSubject)
+    }
     private var trendDelta: Double? { viewModel.averageTrendDelta(examId: exam.id, subject: selectedSubject) }
 
     // 分数分布（原始）
-    private var scoreDistribution: [ScoreBucket] {
+    private func scoreDistribution(_ records: [ScoreRecord]) -> [ScoreBucket] {
         let buckets = [
             ScoreBucket(range: "0-59", label: "不及格", min: 0, max: 59.99),
             ScoreBucket(range: "60-69", label: "及格", min: 60, max: 69.99),
@@ -63,8 +62,8 @@ struct ScoreDetailView: View {
     }
 
     // 带动画因子的柱状数据
-    private var distributionBars: [DistributionBar] {
-        scoreDistribution.map { b in
+    private func distributionBars(_ records: [ScoreRecord]) -> [DistributionBar] {
+        scoreDistribution(records).map { b in
             DistributionBar(
                 label: b.label,
                 tier: b.range,
@@ -85,6 +84,12 @@ struct ScoreDetailView: View {
     }
 
     var body: some View {
+        // 整页求值一次，往下传（见上方统计量注释）
+        let records = self.records
+        let stats = self.stats
+        let scoreTexts = Dictionary(uniqueKeysWithValues:
+            records.map { ($0.studentId, Self.scoreText($0.score)) })
+
         ScrollView {
             VStack(spacing: 14) {
                 if exam.subjects.count > 1 {
@@ -99,14 +104,14 @@ struct ScoreDetailView: View {
                 }
 
                 // MARK: 核心统计
-                heroStats
+                heroStats(stats)
                     .padding(.horizontal, 18)
                     .id("hero-\(selectedSubject)")
                     .transition(.opacity.combined(with: .move(edge: .top)))
 
                 // MARK: 次级指标条
                 if !records.isEmpty {
-                    metricStrip
+                    metricStrip(stats)
                         .padding(.horizontal, 18)
                         .id("strip-\(selectedSubject)")
                         .transition(.opacity)
@@ -114,7 +119,7 @@ struct ScoreDetailView: View {
 
                 // MARK: 分数分布
                 if !records.isEmpty {
-                    distributionCard
+                    distributionCard(records)
                         .padding(.horizontal, 18)
                 }
 
@@ -133,7 +138,7 @@ struct ScoreDetailView: View {
                     VStack(spacing: 8) {
                         ForEach(Array(viewModel.students.enumerated()), id: \.element.id) { index, student in
                             ScoreInputRow(student: student, examId: exam.id, subject: selectedSubject,
-                                          initialScore: score(of: student.id))
+                                          initialScore: scoreTexts[student.id] ?? "")
                                 .staggeredAppear(index: index, step: 0.03)
                         }
                     }
@@ -185,14 +190,13 @@ struct ScoreDetailView: View {
                                        subjects: exam.subjects, students: students)
     }
 
-    private func score(of studentId: UUID) -> String {
-        guard let record = records.first(where: { $0.studentId == studentId }) else { return "" }
-        return record.score.truncatingRemainder(dividingBy: 1) == 0
-            ? String(Int(record.score)) : String(record.score)
+    // 分数显示：整数值不带小数点
+    private static func scoreText(_ score: Double) -> String {
+        score.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(score)) : String(score)
     }
 
     // MARK: - 核心统计（平均分主卡 + 及格率/优秀率）
-    private var heroStats: some View {
+    private func heroStats(_ stats: AppViewModel.SubjectStats) -> some View {
         HStack(alignment: .top, spacing: 10) {
             // 平均分主卡
             VStack(alignment: .leading, spacing: 6) {
@@ -204,16 +208,16 @@ struct ScoreDetailView: View {
                 .foregroundColor(.white.opacity(0.85))
 
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text(records.isEmpty ? "—" : String(format: "%.1f", average))
+                    Text(stats.isEmpty ? "—" : String(format: "%.1f", stats.average))
                         .font(.system(size: 40, weight: .heavy).monospacedDigit())
                         .numericRoll()
-                    if let delta = trendDelta, !records.isEmpty {
+                    if let delta = trendDelta, !stats.isEmpty {
                         TrendDeltaBadge(delta: delta)
                     }
                 }
                 .foregroundColor(.white)
 
-                Text("\(records.count)/\(viewModel.students.count) 人已录入")
+                Text("\(stats.count)/\(viewModel.students.count) 人已录入")
                     .font(AppTheme.Fonts.caption2)
                     .foregroundColor(.white.opacity(0.75))
             }
@@ -225,10 +229,10 @@ struct ScoreDetailView: View {
 
             // 及格率 / 优秀率
             VStack(spacing: 10) {
-                rateSubCard(title: "及格率", value: passRate, systemImage: "checkmark.seal",
-                            color: AppTheme.Colors.green, hasData: !records.isEmpty)
-                rateSubCard(title: "优秀率", value: excellentRate, systemImage: "star",
-                            color: AppTheme.Colors.yellow, hasData: !records.isEmpty)
+                rateSubCard(title: "及格率", value: stats.passRate, systemImage: "checkmark.seal",
+                            color: AppTheme.Colors.green, hasData: !stats.isEmpty)
+                rateSubCard(title: "优秀率", value: stats.excellentRate, systemImage: "star",
+                            color: AppTheme.Colors.yellow, hasData: !stats.isEmpty)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -258,12 +262,12 @@ struct ScoreDetailView: View {
     }
 
     // MARK: - 次级指标条（最高/最低/中位/标准差）
-    private var metricStrip: some View {
+    private func metricStrip(_ stats: AppViewModel.SubjectStats) -> some View {
         HStack(spacing: 8) {
-            metricCell(title: "最高", value: String(format: "%.0f", highest), color: AppTheme.Colors.green)
-            metricCell(title: "最低", value: String(format: "%.0f", lowest), color: AppTheme.Colors.red)
-            metricCell(title: "中位", value: String(format: "%.0f", median), color: AppTheme.Colors.blue)
-            metricCell(title: "标准差", value: String(format: "%.1f", stdDev), color: AppTheme.Colors.purple)
+            metricCell(title: "最高", value: String(format: "%.0f", stats.highest), color: AppTheme.Colors.green)
+            metricCell(title: "最低", value: String(format: "%.0f", stats.lowest), color: AppTheme.Colors.red)
+            metricCell(title: "中位", value: String(format: "%.0f", stats.median), color: AppTheme.Colors.blue)
+            metricCell(title: "标准差", value: String(format: "%.1f", stats.stdDev), color: AppTheme.Colors.purple)
         }
     }
 
@@ -286,7 +290,7 @@ struct ScoreDetailView: View {
     }
 
     // MARK: - 分数分布卡片
-    private var distributionCard: some View {
+    private func distributionCard(_ records: [ScoreRecord]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("分数分布").font(AppTheme.Fonts.title3).foregroundColor(AppTheme.Colors.primaryText)
@@ -295,7 +299,7 @@ struct ScoreDetailView: View {
                     .font(AppTheme.Fonts.caption).foregroundColor(AppTheme.Colors.tertiaryText)
             }
 
-            Chart(distributionBars) { bar in
+            Chart(distributionBars(records)) { bar in
                 BarMark(x: .value("分数段", bar.label), y: .value("人数", bar.animatedValue))
                     .cornerRadius(6)
                     .foregroundStyle(barColor(bar))
@@ -335,7 +339,7 @@ struct ScoreDetailView: View {
             // 选中段明细 / 占比提示
             Group {
                 if let selected = selectedBar,
-                   let bar = distributionBars.first(where: { $0.label == selected }) {
+                   let bar = distributionBars(records).first(where: { $0.label == selected }) {
                     HStack(spacing: 6) {
                         Image(systemName: "info.circle.fill").font(.system(size: 11))
                         Text("\(bar.label)：\(bar.count) 人 · 占 \(Int(bar.ratio * 100))%")
