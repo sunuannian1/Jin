@@ -376,6 +376,7 @@ struct ClassMapView: View {
 
     // 调整地图区域以显示所有标注
     private func fitRegion() {
+        let pins = self.pins(from: studentsWithCoord)
         guard !pins.isEmpty else { return }
         let lats = pins.map { $0.coordinate.latitude }
         let lons = pins.map { $0.coordinate.longitude }
