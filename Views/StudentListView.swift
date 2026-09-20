@@ -70,13 +70,19 @@ struct StudentListView: View {
             $0.name.localizedCaseInsensitiveContains(searchText)
                 || $0.studentNumber.localizedCaseInsensitiveContains(searchText)
                 || $0.phone.contains(searchText)
-                || $0.fatherPhone.contains(searchText)
+                // 模型已迁移到 guardians，仍搜 fatherPhone 会让"按家长姓名/电话找人"静默失效
+                || $0.guardians.contains { guardian in
+                    guardian.phone.contains(searchText)
+                        || guardian.name.localizedCaseInsensitiveContains(searchText)
+                }
         }
     }
 
     var body: some View {
+        // 每帧只过滤+排序一次：原先 body 里读了 4 遍，每遍都把名册重算一遍
+        let students = filteredStudents
         Group {
-            if filteredStudents.isEmpty {
+            if students.isEmpty {
                 EmptyStateView(
                     systemImage: "person.2",
                     title: searchText.isEmpty ? "还没有学生" : "未找到学生",
@@ -84,10 +90,12 @@ struct StudentListView: View {
                 )
             } else {
                 ScrollView {
-                    VStack(spacing: 10) {
+                    // 懒建：学生卡片含监护人列表与上下文菜单，一次性全量建几百个视图
+                    // 会让进入名册页和切筛选时明显卡顿
+                    LazyVStack(spacing: 10) {
                         // 统计
                         HStack {
-                            Text("\(filteredStudents.count) 位学生")
+                            Text("\(students.count) 位学生")
                                 .font(AppTheme.Fonts.caption.weight(.semibold))
                                 .foregroundColor(AppTheme.Colors.tertiaryText)
                             Spacer()
@@ -96,14 +104,15 @@ struct StudentListView: View {
                         .padding(.top, 4)
 
                         // 学生卡片列表
-                        ForEach(Array(filteredStudents.enumerated()), id: \.element.id) { index, student in
+                        ForEach(Array(students.enumerated()), id: \.element.id) { index, student in
                             NavigationLink {
                                 StudentDetailView(studentId: student.id)
                             } label: {
                                 StudentCard(student: student)
                             }
                             .buttonStyle(PressableButtonStyle())
-                            .staggeredAppear(index: index, step: 0.035)
+                            // 懒建后行是滚动到位才挂载：不封顶的话，滑到第 40 行会等 0.45s 才淡入
+                            .staggeredAppear(index: min(index, 8), step: 0.035)
                             .contextMenu {
                                 if !student.phone.isEmpty, let url = telURL(student.phone) {
                                     Button {
@@ -162,17 +171,20 @@ struct StudentListView: View {
                 } label: {
                     Image(systemName: "tray.and.arrow.down")
                 }
+                .accessibilityLabel("导入学生")
                 Button {
                     printRoster()
                 } label: {
                     Image(systemName: "printer")
                 }
-                .disabled(filteredStudents.isEmpty)
+                .disabled(students.isEmpty)
+                .accessibilityLabel("打印名册")
                 Button {
                     showingAdd = true
                 } label: {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel("添加学生")
             }
         }
         .sheet(isPresented: $showingAdd) {
