@@ -4,6 +4,12 @@ import SwiftUI
 struct ScheduleView: View {
     @EnvironmentObject var viewModel: AppViewModel
     @State private var selectedSlot: ScheduleSlot?
+    @State private var showImporter = false
+    @State private var pendingImport: [Course]?
+    @State private var importSkipped = 0
+    @State private var showImportConfirm = false
+    @State private var importMessage: String?
+    @State private var showImportResult = false
 
     private let weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
     private let timeCol: CGFloat = 50
@@ -92,12 +98,56 @@ struct ScheduleView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
+                Button { showImporter = true } label: { Image(systemName: "square.and.arrow.down") }
+                    .accessibilityLabel("导入课表")
+            }
+            ToolbarItem(placement: .primaryAction) {
                 Button { printSchedule() } label: { Image(systemName: "printer") }
                     .accessibilityLabel("打印课表")
             }
         }
         .sheet(item: $selectedSlot) {
             CourseEditSheet(weekday: $0.weekday, period: $0.period)
+        }
+        .fileImporter(isPresented: $showImporter,
+                      allowedContentTypes: [.commaSeparatedText, .text, .data]) { result in
+            guard case .success(let url) = result else {
+                importMessage = "未能读取文件"; showImportResult = true; return
+            }
+            guard let data = AppViewModel.readSecuredFile(url) else {
+                importMessage = "没有读取该文件的权限，请先把它放进「文件」App 再试"
+                showImportResult = true
+                return
+            }
+            let parsed = AppViewModel.parseCourseCSV(CSVParser.decodeText(data))
+            guard !parsed.courses.isEmpty else {
+                importMessage = "没读到有效课程：表头需含「星期」「节次」「科目」三列"
+                showImportResult = true
+                return
+            }
+            importSkipped = parsed.skipped
+            pendingImport = parsed.courses
+            showImportConfirm = true
+        }
+        .confirmationDialog("确认导入课表", isPresented: $showImportConfirm, presenting: pendingImport) { list in
+            Button("导入 \(list.count) 节") {
+                let outcome = viewModel.applyImportedCourses(list)
+                var text = "新增 \(outcome.added) 节，覆盖 \(outcome.replaced) 节"
+                if importSkipped > 0 { text += "；忽略无法识别的 \(importSkipped) 行" }
+                importMessage = text
+                showImportResult = true
+                pendingImport = nil
+            }
+            Button("取消", role: .cancel) { pendingImport = nil }
+        } message: { list in
+            let slots = viewModel.courseSlots()
+            let overlay = list.filter { slots.contains("\($0.dayOfWeek)-\($0.period)") }.count
+            Text("共 \(list.count) 节课，其中 \(overlay) 节会覆盖已有课程；无法识别 \(importSkipped) 行。")
+        }
+        .alert("导入课表", isPresented: $showImportResult) {
+            Button("好", role: .cancel) {}
+        } message: {
+            Text(importMessage ?? "")
         }
     }
 

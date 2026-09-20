@@ -429,6 +429,76 @@ class AppViewModel: ObservableObject {
         if let i = courses.firstIndex(where: { $0.id == course.id }) { courses[i] = course }
     }
     func deleteCourse(_ course: Course) { courses.removeAll { $0.id == course.id } }
+
+    // MARK: - 课表导入
+    /// 只解析不改数据：表头需含 星期 / 节次 / 科目，教师与教室可选。
+    /// 星期支持 周一、星期一、1~7；节次支持 第1节、1、早读（记为 0）。
+    static func parseCourseCSV(_ text: String) -> (courses: [Course], skipped: Int) {
+        let rows = CSVParser.parse(text)
+        guard rows.count >= 2 else { return ([], 0) }
+        let headers = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        func col(_ names: [String]) -> Int? {
+            for name in names {
+                if let i = headers.firstIndex(where: { $0.contains(name) }) { return i }
+            }
+            return nil
+        }
+        let ciDay = col(["星期", "周", "天"])
+        let ciPeriod = col(["节次", "第几节", "节"])
+        let ciSubject = col(["科目", "课程"])
+        let ciTeacher = col(["教师", "老师"])
+        let ciRoom = col(["教室", "地点"])
+        guard ciDay != nil, ciPeriod != nil, ciSubject != nil else { return ([], 0) }
+
+        let weekdayHints: [(String, Int)] = [("一", 1), ("二", 2), ("三", 3), ("四", 4),
+                                             ("五", 5), ("六", 6), ("日", 7), ("天", 7)]
+        var imported: [Course] = []
+        var skipped = 0
+        for row in rows.dropFirst() {
+            func cell(_ i: Int?) -> String {
+                guard let i, i < row.count else { return "" }
+                return row[i].trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            let dayText = cell(ciDay)
+            let periodText = cell(ciPeriod)
+            let subject = cell(ciSubject)
+
+            var day: Int?
+            if let n = Int(dayText), (1...7).contains(n) { day = n }
+            else if let hit = weekdayHints.first(where: { dayText.contains($0.0) })?.1 { day = hit }
+
+            var period: Int?
+            if periodText.contains("早读") { period = 0 }
+            else if let range = periodText.range(of: "[0-9]+", options: .regularExpression),
+                    let n = Int(periodText[range]), (0...12).contains(n) { period = n }
+
+            guard let day, let period, !subject.isEmpty else { skipped += 1; continue }
+            imported.append(Course(subject: subject, dayOfWeek: day, period: period,
+                                   classroom: cell(ciRoom), teacher: cell(ciTeacher)))
+        }
+        return (imported, skipped)
+    }
+
+    /// 已排课的 (星期,节次) 槽位，供导入前预览"会覆盖几节"
+    func courseSlots() -> Set<String> {
+        Set(courses.map { "\($0.dayOfWeek)-\($0.period)" })
+    }
+
+    /// 应用导入：同槽位旧课被替换，整批只写一次
+    @discardableResult
+    func applyImportedCourses(_ imported: [Course]) -> (added: Int, replaced: Int) {
+        guard !imported.isEmpty else { return (0, 0) }
+        var bySlot: [String: Course] = [:]
+        for course in courses { bySlot["\(course.dayOfWeek)-\(course.period)"] = course }
+        var added = 0, replaced = 0
+        for course in imported {
+            let key = "\(course.dayOfWeek)-\(course.period)"
+            if bySlot[key] != nil { replaced += 1 } else { added += 1 }
+            bySlot[key] = course
+        }
+        courses = bySlot.values.sorted { ($0.dayOfWeek, $0.period) < ($1.dayOfWeek, $1.period) }
+        return (added, replaced)
+    }
     // 今天星期几（1=周一 ... 7=周日）
     var todayDayOfWeek: Int {
         let weekday = Calendar.current.component(.weekday, from: Date())
