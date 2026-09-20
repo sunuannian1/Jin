@@ -64,11 +64,11 @@ struct HomeFeatureManagerView: View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(isVisible ? AppTheme.Colors.accent.opacity(0.15) : Color.gray.opacity(0.1))
+                    .fill(isVisible ? AppTheme.Colors.accent.opacity(0.15) : AppTheme.Colors.subtleBackground)
                     .frame(width: 36, height: 36)
                 Image(systemName: feature.systemImage)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(isVisible ? AppTheme.Colors.accent : .gray)
+                    .foregroundColor(isVisible ? AppTheme.Colors.accent : AppTheme.Colors.tertiaryText)
             }
 
             Text(feature.name)
@@ -82,9 +82,9 @@ struct HomeFeatureManagerView: View {
             } label: {
                 Image(systemName: isVisible ? "eye.fill" : "eye.slash.fill")
                     .font(.system(size: 14))
-                    .foregroundColor(isVisible ? AppTheme.Colors.accent : .gray)
+                    .foregroundColor(isVisible ? AppTheme.Colors.accent : AppTheme.Colors.tertiaryText)
                     .frame(width: 32, height: 32)
-                    .background(isVisible ? AppTheme.Colors.accentSoft : Color.gray.opacity(0.1))
+                    .background(isVisible ? AppTheme.Colors.accentSoft : AppTheme.Colors.subtleBackground)
                     .clipShape(Circle())
             }
             .buttonStyle(.plain)

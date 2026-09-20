@@ -92,7 +92,7 @@ struct TodoListView: View {
                             .transition(.scale.combined(with: .opacity))
                     } else {
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .stroke(Color.gray.opacity(0.4), lineWidth: 1.5)
+                            .stroke(AppTheme.Colors.tertiaryText.opacity(0.5), lineWidth: 1.5)
                             .frame(width: 22, height: 22)
                     }
                 }
@@ -109,12 +109,12 @@ struct TodoListView: View {
                     if let due = todo.dueDate {
                         Label(due.formatted(.dateTime.month().day()), systemImage: "calendar")
                             .font(.caption2)
-                            .foregroundColor(isOverdue(todo) ? .red : .secondary)
+                            .foregroundColor(isOverdue(todo) ? AppTheme.Colors.red : AppTheme.Colors.tertiaryText)
                     }
                     if let completedAt = todo.completedAt {
                         Label("完成于 \(completedAt.formatted(.dateTime.month().day().hour().minute()))", systemImage: "checkmark.circle")
                             .font(.caption2)
-                            .foregroundColor(.green)
+                            .foregroundColor(AppTheme.Colors.green)
                     }
                 }
             }

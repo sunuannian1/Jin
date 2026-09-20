@@ -118,14 +118,14 @@ struct RankingListView: View {
                 VStack(spacing: 6) {
                     ZStack {
                         Circle()
-                            .fill((colors[entry.rank] ?? .gray).opacity(0.2))
+                            .fill((colors[entry.rank] ?? AppTheme.Colors.gray).opacity(0.2))
                             .frame(width: 56, height: 56)
                         StudentAvatar(name: entry.student.name, size: 44)
                         Text("\(entry.rank)")
                             .font(.system(size: 10, weight: .heavy))
                             .foregroundColor(.white)
                             .frame(width: 18, height: 18)
-                            .background(Circle().fill(colors[entry.rank] ?? .gray))
+                            .background(Circle().fill(colors[entry.rank] ?? AppTheme.Colors.gray))
                             .offset(x: 20, y: -20)
                     }
                     .scaleEffect(podiumReveal ? 1 : 0.2)
@@ -139,7 +139,7 @@ struct RankingListView: View {
                         .font(AppTheme.Fonts.caption)
                         .foregroundColor(AppTheme.Colors.secondaryText)
                     Rectangle()
-                        .fill((colors[entry.rank] ?? .gray).opacity(0.3))
+                        .fill((colors[entry.rank] ?? AppTheme.Colors.gray).opacity(0.3))
                         .frame(height: podiumReveal ? (barHeight[entry.rank] ?? 12) : 0)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }

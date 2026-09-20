@@ -84,7 +84,7 @@ struct DutyView: View {
                     withAnimation { viewModel.nextDutyGroup() }
                 }
                 .font(.subheadline)
-                .foregroundColor(.accentColor)
+                .foregroundColor(AppTheme.Colors.accent)
             }
 
             if let current = current {
@@ -93,7 +93,7 @@ struct DutyView: View {
                         .font(.largeTitle.bold())
                         .foregroundColor(.white)
                         .frame(width: 64, height: 64)
-                        .background(Color.accentColor)
+                        .background(AppTheme.Colors.accent)
                         .clipShape(Circle())
                     VStack(alignment: .leading, spacing: 4) {
                         Text("第\(current.groupNumber)值日组")
@@ -183,7 +183,7 @@ struct DutyGroupEditView: View {
                             Spacer()
                             if selectedIds.contains(student.id) {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(.accentColor)
+                                    .foregroundColor(AppTheme.Colors.accent)
                             }
                         }
                     }
