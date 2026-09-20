@@ -173,6 +173,11 @@ struct ScoreRecord: Identifiable, Codable {
         self.score = score
         self.fullScore = fullScore
     }
+
+    // 成绩唯一键：学生 + 考试 + 科目
+    static func key(studentId: UUID, examId: UUID, subject: String) -> String {
+        "\(studentId.uuidString)|\(examId.uuidString)|\(subject)"
+    }
 }
 
 // MARK: - 课程

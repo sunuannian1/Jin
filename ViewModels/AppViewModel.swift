@@ -53,6 +53,7 @@ class AppViewModel: ObservableObject {
     }
 
     private var cancellables = Set<AnyCancellable>()
+    private var themeObserver: NSObjectProtocol?
     private let dataManager = DataManager.shared
 
     init() {
@@ -139,8 +140,16 @@ class AppViewModel: ObservableObject {
 
     // 监听主题变化，触发全局 UI 刷新
     private func setupThemeObserver() {
-        NotificationCenter.default.addObserver(forName: NSNotification.Name("ThemeChanged"), object: nil, queue: .main) { [weak self] _ in
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: AppTheme.themeDidChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
             self?.objectWillChange.send()
+        }
+    }
+
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
 
@@ -236,8 +245,23 @@ class AppViewModel: ObservableObject {
         var failed = 0
         var notFound: Set<String> = []
 
+        // 学号按补零后的形式建索引（与 normNumber 的匹配口径一致），
+        // 避免每条记录都线性扫一遍学生表。
+        let studentsByNumber = Dictionary(
+            students.map { (Self.normNumber($0.studentNumber), $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        // 全部写入先在局部数组完成，最后一次性发布：
+        // 原实现每条记录触发一次 @Published，导入 450 条就重算 450 次全量 UI + 防抖落盘。
+        var updated = scoreRecords
+        var indexOf: [String: Int] = [:]
+        for (i, existing) in updated.enumerated() {
+            indexOf[ScoreRecord.key(studentId: existing.studentId, examId: existing.examId,
+                                    subject: existing.subject)] = i
+        }
+
         for record in records {
-            guard let student = students.first(where: { Self.normNumber($0.studentNumber) == Self.normNumber(record.studentNumber) }) else {
+            guard let student = studentsByNumber[Self.normNumber(record.studentNumber)] else {
                 notFound.insert(record.studentNumber)
                 failed += 1
                 continue
@@ -246,10 +270,18 @@ class AppViewModel: ObservableObject {
                 failed += 1
                 continue
             }
-            setScore(studentId: student.id, examId: examId, subject: record.subject, score: record.score)
+            let key = ScoreRecord.key(studentId: student.id, examId: examId, subject: record.subject)
+            if let i = indexOf[key] {
+                updated[i].score = record.score
+            } else {
+                indexOf[key] = updated.count
+                updated.append(ScoreRecord(studentId: student.id, subject: record.subject,
+                                           examId: examId, score: record.score))
+            }
             success += 1
         }
 
+        scoreRecords = updated
         return (success, failed, Array(notFound))
     }
     func deleteExam(_ exam: Exam) {
@@ -337,11 +369,16 @@ class AppViewModel: ObservableObject {
         return current - prev
     }
 
+    // 单遍扫成绩建索引，避免原先"每个学生重扫一遍全量成绩"的 O(学生数×成绩数)。
     func totalRanking(for examId: UUID) -> [(student: Student, total: Double)] {
-        students
-            .map { (student: $0, total: totalScore(of: $0.id, examId: examId)) }
-            .filter { $0.total > 0 }
-            .sorted { $0.total > $1.total }
+        var totals: [UUID: Double] = [:]
+        for record in scoreRecords where record.examId == examId {
+            totals[record.studentId, default: 0] += record.score
+        }
+        return students.compactMap { student -> (student: Student, total: Double)? in
+            guard let total = totals[student.id], total > 0 else { return nil }
+            return (student, total)
+        }.sorted { $0.total > $1.total }
     }
 
     // MARK: - 学生个人成绩（学生详情 · 对齐网页成绩趋势/考试记录）
@@ -417,7 +454,13 @@ class AppViewModel: ObservableObject {
     }
     func deleteDutyGroup(_ group: DutyGroup) { dutyGroups.removeAll { $0.id == group.id } }
     func dutyStudentNames(of group: DutyGroup) -> String {
-        group.studentIds.compactMap { student(id: $0)?.name }.joined(separator: "、")
+        let names = studentNameLookup()
+        return group.studentIds.compactMap { names[$0] }.joined(separator: "、")
+    }
+
+    // 一次性建 id->姓名 索引，供批量取名使用（原先每个 id 都线性扫全表）
+    private func studentNameLookup() -> [UUID: String] {
+        Dictionary(students.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
     }
 
     // MARK: - 待办
@@ -554,7 +597,8 @@ class AppViewModel: ObservableObject {
     }
     func photoData(id: UUID) -> Data? { dataManager.loadPhotoData(id: id) }
     func photos(in folder: AlbumFolder) -> [AlbumPhoto] {
-        folder.photoIds.compactMap { id in albumPhotos.first { $0.id == id } }
+        let byId = Dictionary(albumPhotos.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return folder.photoIds.compactMap { byId[$0] }
     }
     // 相册实际封面：优先指定封面，否则取第一张
     func coverPhotoId(of folder: AlbumFolder) -> UUID? {
@@ -781,14 +825,22 @@ class AppViewModel: ObservableObject {
     }
 
     // MARK: - 日期
-    var todayString: String {
-        let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "M月d日"
-        return f.string(from: Date())
-    }
-    var weekdayString: String {
-        let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN"); f.dateFormat = "EEEE"
-        return f.string(from: Date())
-    }
+    // DateFormatter 构造开销很大，原先每次读取都要新建一个（首页每帧两次）。
+    private static let todayDateFormat: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "M月d日"
+        return f
+    }()
+    private static let weekdayDateFormat: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "EEEE"
+        return f
+    }()
+
+    var todayString: String { Self.todayDateFormat.string(from: Date()) }
+    var weekdayString: String { Self.weekdayDateFormat.string(from: Date()) }
 }
 
 // MARK: - 学生个人成绩数据结构（学生详情趋势/记录用）

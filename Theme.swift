@@ -54,16 +54,28 @@ enum AppTheme {
         }
     }
 
-    // MARK: - 当前主题（从 UserDefaults 读取，默认暖阳橙）
+    // MARK: - 当前主题
+    // 取值走内存缓存：原先每次取色都要读一次 UserDefaults，而一个页面每帧会取几十次。
+    static let themeDidChangeNotification = NSNotification.Name("AppThemeDidChange")
+
     static var currentTheme: Theme {
-        get {
-            let saved = UserDefaults.standard.string(forKey: "appTheme") ?? ""
-            return Theme(rawValue: saved) ?? .warmOrange
-        }
+        get { cachedTheme }
         set {
+            guard newValue != cachedTheme else { return }
+            cachedTheme = newValue
             UserDefaults.standard.set(newValue.rawValue, forKey: "appTheme")
+            Colors.invalidateThemeCache()
+            Shadows.invalidateThemeCache()
+            // 导航栏/TabBar/tint 是一次性写入 UIKit appearance 的快照，必须重放才能跟上新主题
+            applyGlobalAppearance()
+            NotificationCenter.default.post(name: themeDidChangeNotification, object: nil)
         }
     }
+
+    private static var cachedTheme: Theme = {
+        let saved = UserDefaults.standard.string(forKey: "appTheme") ?? ""
+        return Theme(rawValue: saved) ?? .warmOrange
+    }()
 
     // MARK: - 动态颜色辅助
     private static func dynamicColor(light: UIColor, dark: UIColor) -> Color {
@@ -125,19 +137,35 @@ enum AppTheme {
         )
 
         // 强调色（动态主题，深色模式下提亮）
+        // 全局最热路径（单页每帧可达数十次），构造动态 UIColor 并不便宜，
+        // 故按主题缓存，只在 currentTheme 写入时失效。
+        private static var cachedAccent: Color?
+        private static var cachedAccentSoft: Color?
+
         static var accent: Color {
-            dynamicColor(
+            if let cached = cachedAccent { return cached }
+            let color = dynamicColor(
                 light: UIColor(currentTheme.accent),
                 dark: UIColor(currentTheme.accent).adjustedBrightness(by: 0.15)
             )
+            cachedAccent = color
+            return color
         }
         static var accentSoft: Color {
-            dynamicColor(
+            if let cached = cachedAccentSoft { return cached }
+            let color = dynamicColor(
                 light: UIColor(currentTheme.accentSoft),
                 dark: UIColor(currentTheme.accent).withAlphaComponent(0.15)
             )
+            cachedAccentSoft = color
+            return color
         }
         static var accentGradient: LinearGradient { currentTheme.accentGradient }
+
+        static func invalidateThemeCache() {
+            cachedAccent = nil
+            cachedAccentSoft = nil
+        }
 
         // 功能色（深色模式下微调）
         static let blue = dynamicColor(
@@ -229,7 +257,17 @@ enum AppTheme {
         static let sm = Shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
         static let md = Shadow(color: Color.black.opacity(0.07), radius: 8, x: 0, y: 2)
         static let lg = Shadow(color: Color.black.opacity(0.10), radius: 16, x: 0, y: 4)
-        static let accent = Shadow(color: currentTheme.accent.opacity(0.28), radius: 12, x: 0, y: 4)
+
+        // 原先是 static let：主题切换后所有卡片/主按钮的辉光颜色永久停留在旧主题
+        private static var cachedAccent: Shadow?
+        static var accent: Shadow {
+            if let cached = cachedAccent { return cached }
+            let shadow = Shadow(color: Colors.accent.opacity(0.28), radius: 12, x: 0, y: 4)
+            cachedAccent = shadow
+            return shadow
+        }
+
+        static func invalidateThemeCache() { cachedAccent = nil }
     }
 
     struct Shadow {
@@ -504,6 +542,32 @@ struct PillTag: View {
             .padding(.vertical, 4)
             .background(color.opacity(0.12))
             .clipShape(Capsule())
+    }
+}
+
+// MARK: - 筛选胶囊
+// 选中态用"强调色浅底 + 强调色文字"。原先两处私有实现都拿 primaryText 当底色配白字，
+// 深色模式下 primaryText 接近纯白，选中的标签会直接看不见。
+struct FilterChip: View {
+    let title: String
+    var isActive: Bool = false
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(AppTheme.Fonts.caption.weight(.semibold))
+                .foregroundColor(isActive ? AppTheme.Colors.accent : AppTheme.Colors.secondaryText)
+                .lineLimit(1)
+                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.vertical, AppTheme.Spacing.xSmall)
+                .background(isActive ? AppTheme.Colors.accentSoft : AppTheme.Colors.subtleBackground)
+                .clipShape(Capsule())
+                .contentShape(Capsule())
+                .animation(AppTheme.Motion.snappy, value: isActive)
+        }
+        .buttonStyle(PressableButtonStyle(scale: 0.92))
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 }
 

@@ -170,38 +170,16 @@ struct ExamListView: View {
     private var typeFilterBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                filterChip(title: "全部", isActive: typeFilter == nil) {
+                FilterChip(title: "全部", isActive: typeFilter == nil) {
                     typeFilter = nil
                 }
                 ForEach(Exam.ExamType.allCases, id: \.self) { type in
-                    filterChip(title: type.rawValue, isActive: typeFilter == type) {
+                    FilterChip(title: type.rawValue, isActive: typeFilter == type) {
                         typeFilter = type
                     }
                 }
             }
         }
-    }
-
-    private func filterChip(title: String, isActive: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(AppTheme.Fonts.caption.weight(.semibold))
-                .foregroundColor(isActive ? .white : AppTheme.Colors.secondaryText)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(
-                    Group {
-                        if isActive {
-                            AppTheme.Colors.primaryText
-                        } else {
-                            AppTheme.Colors.subtleBackground
-                        }
-                    }
-                )
-                .clipShape(Capsule())
-                .animation(AppTheme.Motion.snappy, value: isActive)
-        }
-        .buttonStyle(PressableButtonStyle(scale: 0.92))
     }
 }
 

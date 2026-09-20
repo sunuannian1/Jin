@@ -411,10 +411,9 @@ struct ThemePickerView: View {
                         Button {
                             withAnimation(AppTheme.Motion.snappy) {
                                 selectedTheme = theme
+                                // setter 内部会重放 UIKit 外观并广播刷新，这里不再手动发通知
                                 AppTheme.currentTheme = theme
                             }
-                            // 发送通知让全局刷新
-                            NotificationCenter.default.post(name: NSNotification.Name("ThemeChanged"), object: nil)
                         } label: {
                             HStack(spacing: 14) {
                                 // 主题预览

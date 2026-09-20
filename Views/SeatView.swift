@@ -8,13 +8,12 @@ struct SeatView: View {
 
     // 每组列数（左右各一组）
     private let colsPerGroup = 4
-    // 总列数 = 左组 + 过道 + 右组
-    private var totalCols: Int { colsPerGroup * 2 + 1 } // +1 是过道
 
-    // 动态行数
+    // 动态行数：必须覆盖已分配的最大排号，否则排号靠后的学生整排都不会被渲染
     private var rows: Int {
-        guard !viewModel.students.isEmpty else { return 1 }
-        return Int(ceil(Double(viewModel.students.count) / Double(colsPerGroup * 2)))
+        let assignedMax = viewModel.students.map(\.seatRow).max() ?? 0
+        let needed = Int(ceil(Double(viewModel.students.count) / Double(colsPerGroup * 2)))
+        return max(1, assignedMax, needed)
     }
 
     var body: some View {

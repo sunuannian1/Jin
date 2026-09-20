@@ -207,14 +207,14 @@ struct StudentListView: View {
     private var seatFilterBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                filterChip(title: "全部", isActive: seatFilter == nil) {
+                FilterChip(title: "全部", isActive: seatFilter == nil) {
                     seatFilter = nil
                 }
-                filterChip(title: "未排座", isActive: seatFilter == 0) {
+                FilterChip(title: "未排座", isActive: seatFilter == 0) {
                     seatFilter = 0
                 }
                 ForEach(1...maxSeatRow, id: \.self) { row in
-                    filterChip(title: "第\(row)排", isActive: seatFilter == row) {
+                    FilterChip(title: "第\(row)排", isActive: seatFilter == row) {
                         seatFilter = row
                     }
                 }
@@ -224,27 +224,6 @@ struct StudentListView: View {
         }
         .background(AppTheme.Colors.background.opacity(0.95))
         .background(.ultraThinMaterial)
-    }
-
-    private func filterChip(title: String, isActive: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(AppTheme.Fonts.caption.weight(.semibold))
-                .foregroundColor(isActive ? .white : AppTheme.Colors.secondaryText)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Group {
-                        if isActive {
-                            AppTheme.Colors.primaryText
-                        } else {
-                            AppTheme.Colors.subtleBackground
-                        }
-                    }
-                )
-                .clipShape(Capsule())
-        }
-        .buttonStyle(.plain)
     }
 
     private func telURL(_ phone: String) -> URL? {
