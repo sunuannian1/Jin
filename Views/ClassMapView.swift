@@ -392,7 +392,7 @@ struct ClassMapView: View {
     // MARK: - 地理编码（高德优先，精准定位）
 
     private let amapApiKey = "e0177c72e585f5718b4cdbc052918ecf"
-    private let geocoder = CLGeocoder()
+    // geocoder 已上移到 @State（视图结构体每次刷新都会重建，let 会跟着不断新建实例）
 
     // 地址预处理：确保完整地址格式
     private func normalizedAddress(_ raw: String) -> String {
